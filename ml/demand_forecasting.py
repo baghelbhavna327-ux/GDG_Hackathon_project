@@ -9,12 +9,21 @@ class DemandForecaster:
     """
     Lightweight demand forecasting model using NumPy.
 
-    The model uses historical demand, calendar features,
-    and rolling averages to predict future medicine demand.
+    Uses:
+    - Population
+    - Calendar features
+    - Historical demand lags
+    - Rolling demand averages
+
+    Outputs:
+    - Trained model
+    - Demand predictions CSV
+    - MAE/RMSE metrics
     """
 
     def __init__(self):
         self.coefficients = None
+
         self.feature_names = [
             "bias",
             "population",
@@ -29,6 +38,8 @@ class DemandForecaster:
         ]
 
     def create_features(self, df):
+        """Create calendar, lag and rolling-demand features."""
+
         df = df.copy()
 
         df["date"] = pd.to_datetime(df["date"])
@@ -37,12 +48,18 @@ class DemandForecaster:
             ["phc_id", "medicine_id", "date"]
         ).reset_index(drop=True)
 
+        # -----------------------------
         # Calendar features
+        # -----------------------------
+
         df["day_of_week"] = df["date"].dt.dayofweek
         df["month"] = df["date"].dt.month
         df["day_of_year"] = df["date"].dt.dayofyear
 
+        # -----------------------------
         # Historical demand
+        # -----------------------------
+
         grouped = df.groupby(
             ["phc_id", "medicine_id"]
         )["daily_demand"]
@@ -51,110 +68,139 @@ class DemandForecaster:
         df["lag_7"] = grouped.shift(7)
         df["lag_14"] = grouped.shift(14)
 
+        # -----------------------------
+        # Rolling averages
+        # -----------------------------
+
         df["rolling_mean_7"] = (
-    df.groupby(["phc_id", "medicine_id"])["daily_demand"]
-    .transform(
-        lambda x: x.shift(1).rolling(7).mean()
-    )
-)
+            df.groupby(
+                ["phc_id", "medicine_id"]
+            )["daily_demand"]
+            .transform(
+                lambda x: x.shift(1).rolling(7).mean()
+            )
+        )
 
         df["rolling_mean_14"] = (
-    df.groupby(["phc_id", "medicine_id"])["daily_demand"]
-    .transform(
-        lambda x: x.shift(1).rolling(14).mean()
-    )
-)
+            df.groupby(
+                ["phc_id", "medicine_id"]
+            )["daily_demand"]
+            .transform(
+                lambda x: x.shift(1).rolling(14).mean()
+            )
+        )
+
+        # Remove rows where historical
+        # features are not available.
 
         return df.dropna(
             subset=self.feature_names[1:] + ["daily_demand"]
         ).reset_index(drop=True)
 
-    def _build_matrix(self, df):
-        """
-        Convert features into a NumPy matrix.
+    def _get_feature_columns(self):
+        """Return model feature columns."""
 
-        Standardization is used so large population values
-        don't dominate the regression.
-        """
+        return [
+            "population",
+            "day_of_week",
+            "month",
+            "day_of_year",
+            "lag_1",
+            "lag_7",
+            "lag_14",
+            "rolling_mean_7",
+            "rolling_mean_14",
+        ]
+
+    def _build_matrix(self, df):
+        """Convert dataframe features into NumPy matrix."""
+
+        feature_columns = self._get_feature_columns()
 
         X = df[
-            [
-                "population",
-                "day_of_week",
-                "month",
-                "day_of_year",
-                "lag_1",
-                "lag_7",
-                "lag_14",
-                "rolling_mean_7",
-                "rolling_mean_14",
-            ]
+            feature_columns
         ].to_numpy(dtype=float)
 
-        # Scale features
+        # Feature scaling
         mean = X.mean(axis=0)
         std = X.std(axis=0)
 
         # Avoid division by zero
         std[std == 0] = 1
 
-        X_scaled = (X - mean) / std
+        X_scaled = (
+            X - mean
+        ) / std
 
         # Add intercept
         X_scaled = np.column_stack(
-            [np.ones(len(X_scaled)), X_scaled]
+            [
+                np.ones(len(X_scaled)),
+                X_scaled,
+            ]
         )
 
         return X_scaled, mean, std
 
     def train(self, df):
-        """Train using chronological data."""
+        """Train model using chronological split."""
 
         df = self.create_features(df)
 
-        # Use dates rather than random splitting.
-        unique_dates = sorted(df["date"].unique())
+        # --------------------------------
+        # Chronological train/test split
+        # --------------------------------
 
-        split = int(len(unique_dates) * 0.8)
+        unique_dates = sorted(
+            df["date"].unique()
+        )
+
+        split = int(
+            len(unique_dates) * 0.8
+        )
 
         train_dates = unique_dates[:split]
         test_dates = unique_dates[split:]
 
-        train_df = df[df["date"].isin(train_dates)]
-        test_df = df[df["date"].isin(test_dates)]
+        train_df = df[
+            df["date"].isin(train_dates)
+        ].copy()
 
-        X_train, feature_mean, feature_std = self._build_matrix(
-            train_df
+        test_df = df[
+            df["date"].isin(test_dates)
+        ].copy()
+
+        # --------------------------------
+        # Training
+        # --------------------------------
+
+        X_train, feature_mean, feature_std = (
+            self._build_matrix(train_df)
         )
 
-        y_train = train_df["daily_demand"].to_numpy(
-            dtype=float
-        )
+        y_train = train_df[
+            "daily_demand"
+        ].to_numpy(dtype=float)
 
-        # NumPy least-squares linear regression
+        # NumPy least-squares regression
         self.coefficients = np.linalg.lstsq(
             X_train,
             y_train,
             rcond=None
         )[0]
 
-        # Store scaling parameters for future predictions
+        # Store scaling parameters
         self.feature_mean = feature_mean
         self.feature_std = feature_std
 
-        # Test
+        # --------------------------------
+        # Testing
+        # --------------------------------
+
+        feature_columns = self._get_feature_columns()
+
         X_test_raw = test_df[
-            [
-                "population",
-                "day_of_week",
-                "month",
-                "day_of_year",
-                "lag_1",
-                "lag_7",
-                "lag_14",
-                "rolling_mean_7",
-                "rolling_mean_14",
-            ]
+            feature_columns
         ].to_numpy(dtype=float)
 
         X_test_scaled = (
@@ -162,10 +208,15 @@ class DemandForecaster:
         ) / self.feature_std
 
         X_test = np.column_stack(
-            [np.ones(len(X_test_scaled)), X_test_scaled]
+            [
+                np.ones(len(X_test_scaled)),
+                X_test_scaled,
+            ]
         )
 
-        predictions = X_test @ self.coefficients
+        predictions = (
+            X_test @ self.coefficients
+        )
 
         # Demand cannot be negative
         predictions = np.maximum(
@@ -177,8 +228,14 @@ class DemandForecaster:
             "daily_demand"
         ].to_numpy(dtype=float)
 
+        # --------------------------------
+        # Evaluation
+        # --------------------------------
+
         mae = np.mean(
-            np.abs(actual - predictions)
+            np.abs(
+                actual - predictions
+            )
         )
 
         rmse = np.sqrt(
@@ -187,14 +244,9 @@ class DemandForecaster:
             )
         )
 
-        print("\n==============================")
-        print("DEMAND FORECASTING RESULTS")
-        print("==============================")
-
-        print(f"Training rows : {len(train_df)}")
-        print(f"Testing rows  : {len(test_df)}")
-        print(f"MAE           : {mae:.2f}")
-        print(f"RMSE          : {rmse:.2f}")
+        # --------------------------------
+        # Prediction results
+        # --------------------------------
 
         results = test_df[
             [
@@ -206,11 +258,48 @@ class DemandForecaster:
             ]
         ].copy()
 
-        results["predicted_demand"] = np.round(
-            predictions
-        ).astype(int)
+        results["predicted_demand"] = (
+            np.round(predictions)
+            .astype(int)
+        )
+
+        results["prediction_error"] = (
+            results["daily_demand"]
+            - results["predicted_demand"]
+        )
+
+        results["absolute_error"] = (
+            np.abs(
+                results["prediction_error"]
+            )
+        )
+
+        # --------------------------------
+        # Print results
+        # --------------------------------
+
+        print("\n==============================")
+        print("DEMAND FORECASTING RESULTS")
+        print("==============================")
+
+        print(
+            f"Training rows : {len(train_df)}"
+        )
+
+        print(
+            f"Testing rows  : {len(test_df)}"
+        )
+
+        print(
+            f"MAE           : {mae:.2f}"
+        )
+
+        print(
+            f"RMSE          : {rmse:.2f}"
+        )
 
         print("\nSample predictions:")
+
         print(
             results.head(10).to_string(
                 index=False
@@ -223,10 +312,14 @@ class DemandForecaster:
             "predictions": results,
         }
 
-    def save(self, path="ml/models/demand_model.npz"):
-        """Save the trained NumPy model."""
+    def save(
+        self,
+        path="ml/models/demand_model.npz"
+    ):
+        """Save trained NumPy model."""
 
         path = Path(path)
+
         path.parent.mkdir(
             parents=True,
             exist_ok=True
@@ -239,8 +332,74 @@ class DemandForecaster:
             feature_std=self.feature_std,
         )
 
-        print(f"\nModel saved to: {path}")
+        print(
+            f"\nModel saved to: {path}"
+        )
 
+    def save_predictions(
+        self,
+        predictions,
+        path="ml/models/demand_predictions.csv"
+    ):
+        """Save forecast predictions for the backend/frontend."""
+
+        path = Path(path)
+
+        path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        predictions.to_csv(
+            path,
+            index=False
+        )
+
+        print(
+            f"Predictions saved to: {path}"
+        )
+
+    def save_metrics(
+        self,
+        mae,
+        rmse,
+        path="ml/models/demand_metrics.csv"
+    ):
+        """Save model evaluation metrics."""
+
+        path = Path(path)
+
+        path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        metrics = pd.DataFrame(
+            [
+                {
+                    "metric": "MAE",
+                    "value": round(mae, 4),
+                },
+                {
+                    "metric": "RMSE",
+                    "value": round(rmse, 4),
+                },
+            ]
+        )
+
+        metrics.to_csv(
+            path,
+            index=False
+        )
+
+        print(
+            f"Metrics saved to: {path}"
+        )
+
+
+# ============================================================
+# MAIN
+# ============================================================
 
 if __name__ == "__main__":
 
@@ -248,14 +407,63 @@ if __name__ == "__main__":
         "data/synthetic_phc_data.csv"
     )
 
-    df = pd.read_csv(data_path)
+    print(
+        "Loading dataset..."
+    )
 
-    print("Dataset loaded.")
-    print(f"Rows: {len(df)}")
-    print(f"Columns: {len(df.columns)}")
+    df = pd.read_csv(
+        data_path
+    )
 
+    print(
+        "Dataset loaded."
+    )
+
+    print(
+        f"Rows: {len(df)}"
+    )
+
+    print(
+        f"Columns: {len(df.columns)}"
+    )
+
+    # Create forecaster
     forecaster = DemandForecaster()
 
-    forecaster.train(df)
+    # Train
+    result = forecaster.train(
+        df
+    )
 
+    # Save trained model
     forecaster.save()
+
+    # Save predictions
+    forecaster.save_predictions(
+        result["predictions"]
+    )
+
+    # Save metrics
+    forecaster.save_metrics(
+        result["mae"],
+        result["rmse"]
+    )
+
+    print("\n==============================")
+    print("FORECASTING COMPLETE")
+    print("==============================")
+
+    print(
+        "Model:"
+        "\n  ml/models/demand_model.npz"
+    )
+
+    print(
+        "Predictions:"
+        "\n  ml/models/demand_predictions.csv"
+    )
+
+    print(
+        "Metrics:"
+        "\n  ml/models/demand_metrics.csv"
+    )
