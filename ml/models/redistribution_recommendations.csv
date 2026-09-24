@@ -1,0 +1,2 @@
+medicine_id,medicine_name,source_phc,destination_phc,source_stock,destination_stock,source_surplus,destination_shortage,recommended_transfer_quantity,reason
+M001,Paracetamol,PHC006,PHC005,4370,390,3686,8,8,SURPLUS_TO_SHORTAGE
