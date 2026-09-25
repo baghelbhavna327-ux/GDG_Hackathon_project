@@ -1,0 +1,20 @@
+{
+  "number_of_clients": 3,
+  "number_of_federated_rounds": 3,
+  "participating_states": [
+    "Madhya Pradesh",
+    "Rajasthan",
+    "Gujarat"
+  ],
+  "training_timestamp": "2026-09-25T06:50:52.730628+00:00",
+  "evaluation_metrics": {
+    "mae": 4.482,
+    "rmse": 5.252,
+    "r2": 0.7775
+  },
+  "number_of_local_samples_per_client": {
+    "Madhya Pradesh": 600,
+    "Rajasthan": 600,
+    "Gujarat": 600
+  }
+}
