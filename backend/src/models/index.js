@@ -7,6 +7,12 @@ const PatientFootfall = require('./PatientFootfall');
 const Alert = require('./Alert');
 const Prediction = require('./Prediction');
 const ResourceTransfer = require('./ResourceTransfer');
+const Transfer = require('./Transfer');
+const SupplyRequest = require('./SupplyRequest');
+const Notification = require('./Notification');
+const User = require('./User');
+const AuditLog = require('./AuditLog');
+const DiseaseEvent = require('./DiseaseEvent');
 
 module.exports = {
   PHC,
@@ -17,5 +23,11 @@ module.exports = {
   PatientFootfall,
   Alert,
   Prediction,
-  ResourceTransfer
+  ResourceTransfer,
+  Transfer,
+  SupplyRequest,
+  Notification,
+  User,
+  AuditLog,
+  DiseaseEvent
 };

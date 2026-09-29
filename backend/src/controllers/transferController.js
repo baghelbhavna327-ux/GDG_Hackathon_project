@@ -1,4 +1,5 @@
 const { ResourceTransfer, PHC, Medicine } = require('../models');
+const { createNotification } = require('../utils/notificationHelper');
 
 /**
  * Helper to format resource transfer response objects
@@ -285,6 +286,33 @@ const createTransfer = async (req, res, next) => {
       .populate('destinationPhcId', 'name district state')
       .populate('medicineId', 'name category unit')
       .lean();
+
+    // Trigger Redistribution Notification
+    try {
+      const srcName = populated.sourcePhcId ? populated.sourcePhcId.name : 'Source PHC';
+      const dstName = populated.destinationPhcId ? populated.destinationPhcId.name : 'Destination PHC';
+      const medName = populated.medicineId ? populated.medicineId.name : 'Medicine';
+
+      await createNotification({
+        recipientRole: 'all',
+        type: 'REDISTRIBUTION',
+        title: 'Resource Redistribution Dispatched',
+        message: `Transfer of ${qty} units of ${medName} initiated from ${srcName} to ${dstName}.`,
+        relatedEntityId: newTransfer._id.toString(),
+        relatedEntityType: 'Transfer',
+        actionUrl: '/redistribution',
+        deduplicateWindowMinutes: 15,
+        metadata: {
+          transferId: newTransfer._id.toString(),
+          medicine: medName,
+          quantity: qty,
+          from: srcName,
+          to: dstName
+        }
+      });
+    } catch (notifErr) {
+      console.warn('Transfer notification non-fatal note:', notifErr.message);
+    }
 
     return res.status(201).json({
       success: true,

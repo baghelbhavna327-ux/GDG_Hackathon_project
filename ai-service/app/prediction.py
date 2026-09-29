@@ -12,17 +12,33 @@ Loads the trained XGBoost model from models/demand_model.pkl and executes:
 
 import os
 import sys
-import joblib
-import numpy as np
-import pandas as pd
+import datetime
 from typing import Dict, Any, Union
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
+try:
+    import joblib
+except ImportError:
+    joblib = None
 
 # Ensure parent directory is in path for pipeline unpickling
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from pipeline import XGBoostDemandPipeline
+try:
+    from pipeline import XGBoostDemandPipeline
+except Exception:
+    XGBoostDemandPipeline = None
 
 MODEL_PATH = os.path.join(BASE_DIR, 'models', 'demand_model.pkl')
 
@@ -105,7 +121,7 @@ def predict_demand(input_data: Union[Dict[str, Any], Any]) -> Dict[str, Any]:
         data = dict(input_data)
 
     # 2. Extract and sanitize inputs with safe None fallbacks
-    now = pd.Timestamp.now()
+    now = datetime.datetime.now()
     phc = str(data.get('phc') or data.get('phc_name') or 'PHC Guna Central').strip()
     medicine = str(data.get('medicine') or data.get('medicine_name') or 'Paracetamol').strip()
     
@@ -128,7 +144,7 @@ def predict_demand(input_data: Union[Dict[str, Any], Any]) -> Dict[str, Any]:
     emergency_flag = int(emerg_val) if emerg_val is not None else 0
 
     dow_val = data.get('day_of_week')
-    day_of_week = int(dow_val) if dow_val is not None else now.dayofweek
+    day_of_week = int(dow_val) if dow_val is not None else now.weekday()
 
     month_val = data.get('month')
     month = int(month_val) if month_val is not None else now.month
@@ -139,7 +155,7 @@ def predict_demand(input_data: Union[Dict[str, Any], Any]) -> Dict[str, Any]:
     # 3. Model Inference
     pipeline, _ = load_model_artifact()
 
-    if pipeline is not None:
+    if pipeline is not None and pd is not None:
         try:
             row = pd.DataFrame([{
                 'medicine': medicine,

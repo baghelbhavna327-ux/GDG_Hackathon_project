@@ -61,16 +61,16 @@ export const NewTransferModal: React.FC<NewTransferModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4 text-sm">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Source Facility (Origin)
             </label>
             <select
               value={originId}
               onChange={(e) => setOriginId(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             >
               {hospitals.map((h) => (
-                <option key={h.id} value={h.id}>
+                <option key={h.id} value={h.id} className="dark:bg-slate-800 dark:text-slate-100">
                   {h.name} ({h.status.toUpperCase()})
                 </option>
               ))}
@@ -78,16 +78,16 @@ export const NewTransferModal: React.FC<NewTransferModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Destination Facility (Target)
             </label>
             <select
               value={destId}
               onChange={(e) => setDestId(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             >
               {hospitals.map((h) => (
-                <option key={h.id} value={h.id}>
+                <option key={h.id} value={h.id} className="dark:bg-slate-800 dark:text-slate-100">
                   {h.name} ({h.status.toUpperCase()})
                 </option>
               ))}
@@ -97,7 +97,7 @@ export const NewTransferModal: React.FC<NewTransferModalProps> = ({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Resource Category
             </label>
             <select
@@ -122,26 +122,26 @@ export const NewTransferModal: React.FC<NewTransferModalProps> = ({
                   setUnit('Vials');
                 }
               }}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             >
-              <option value="Mechanical Ventilators">Mechanical Ventilators</option>
-              <option value="Medical Oxygen">Medical Oxygen</option>
-              <option value="Blood & Plasma">Blood & Plasma</option>
-              <option value="PPE Supplies">PPE Supplies</option>
-              <option value="Critical Pharmaceuticals">Critical Pharmaceuticals</option>
-              <option value="ICU Beds">ICU Beds</option>
+              <option value="Mechanical Ventilators" className="dark:bg-slate-800 dark:text-slate-100">Mechanical Ventilators</option>
+              <option value="Medical Oxygen" className="dark:bg-slate-800 dark:text-slate-100">Medical Oxygen</option>
+              <option value="Blood & Plasma" className="dark:bg-slate-800 dark:text-slate-100">Blood & Plasma</option>
+              <option value="PPE Supplies" className="dark:bg-slate-800 dark:text-slate-100">PPE Supplies</option>
+              <option value="Critical Pharmaceuticals" className="dark:bg-slate-800 dark:text-slate-100">Critical Pharmaceuticals</option>
+              <option value="ICU Beds" className="dark:bg-slate-800 dark:text-slate-100">ICU Beds</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Resource Item Description
             </label>
             <input
               type="text"
               value={resourceName}
               onChange={(e) => setResourceName(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               required
             />
           </div>
@@ -149,52 +149,52 @@ export const NewTransferModal: React.FC<NewTransferModalProps> = ({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Quantity</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Quantity</label>
             <input
               type="number"
               min="1"
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Unit of Measure</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Unit of Measure</label>
             <input
               type="text"
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Priority Level</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Priority Level</label>
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as PriorityLevel)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             >
-              <option value="emergency">Emergency (Immediate)</option>
-              <option value="high">High Priority (&lt; 2h)</option>
-              <option value="routine">Routine Scheduled</option>
+              <option value="emergency" className="dark:bg-slate-800 dark:text-slate-100">Emergency (Immediate)</option>
+              <option value="high" className="dark:bg-slate-800 dark:text-slate-100">High Priority (&lt; 2h)</option>
+              <option value="routine" className="dark:bg-slate-800 dark:text-slate-100">Routine Scheduled</option>
             </select>
           </div>
         </div>
 
-        <div className="rounded-lg bg-teal-50/70 p-3 border border-teal-200 text-xs text-teal-800 flex items-center gap-2">
-          <Truck className="h-4 w-4 shrink-0 text-teal-600" />
+        <div className="rounded-lg bg-teal-50/70 dark:bg-teal-950/40 p-3 border border-teal-200 dark:border-teal-900 text-xs text-teal-800 dark:text-teal-300 flex items-center gap-2">
+          <Truck className="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" />
           <span>Automated GPS route calculation and real-time medical escort assigned upon dispatch.</span>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+            className="rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
           >
             Cancel
           </button>

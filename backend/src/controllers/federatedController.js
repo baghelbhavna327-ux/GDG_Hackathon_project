@@ -1,32 +1,64 @@
-const http = require('http');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
+const FASTAPI_URL = process.env.FASTAPI_URL || process.env.FASTAPI_AI_URL || 'http://localhost:8000';
 
 /**
- * Helper to fetch JSON from FastAPI
+ * Diagnostic logger for Node -> FastAPI communication
  */
-const fetchFastAPI = (path) => {
-  return new Promise((resolve, reject) => {
-    const url = `${FASTAPI_URL}${path}`;
-    const req = http.get(url, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(data));
-        } catch (e) {
-          reject(e);
-        }
-      });
+const logRequest = (method, path, status, extra = '') => {
+  console.log(`[Node -> FastAPI] ${method} ${FASTAPI_URL}${path} | Status: ${status} ${extra}`);
+};
+
+/**
+ * Helper to make HTTP requests to FastAPI with structured error handling & timeouts
+ */
+const callFastAPI = async (path, options = {}) => {
+  const url = `${FASTAPI_URL}${path}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      }
     });
-    req.on('error', (err) => reject(err));
-    req.setTimeout(3000, () => {
-      req.destroy();
-      reject(new Error('FastAPI timeout'));
-    });
-  });
+
+    clearTimeout(timeoutId);
+    logRequest(options.method || 'GET', path, response.status);
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => response.statusText);
+      const err = new Error(`FastAPI responded with HTTP ${response.status}: ${errorBody}`);
+      err.status = response.status;
+      err.responseBody = errorBody;
+      throw err;
+    }
+
+    return await response.json();
+  } catch (err) {
+    clearTimeout(timeoutId);
+    const isConnRefused = err.cause?.code === 'ECONNREFUSED' || err.code === 'ECONNREFUSED';
+    const isTimeout = err.name === 'AbortError';
+    logRequest(options.method || 'GET', path, err.status || 'FAILED', `[${isConnRefused ? 'ECONNREFUSED' : isTimeout ? 'TIMEOUT' : err.message}]`);
+    
+    if (isConnRefused) {
+      err.status = 503;
+      err.userMessage = 'Federated AI service is unavailable. Python FastAPI is not reachable on port 8000.';
+    } else if (err.status === 404) {
+      err.userMessage = 'Federated AI endpoint was not found on FastAPI server.';
+    } else if (err.status === 422) {
+      err.userMessage = 'Invalid federated training or inference request (Validation Error).';
+    } else if (!err.status || err.status >= 500) {
+      err.userMessage = 'Federated training service encountered an internal error.';
+    }
+    throw err;
+  }
 };
 
 /**
@@ -36,24 +68,13 @@ const fetchFastAPI = (path) => {
  */
 const getFederatedStatus = async (req, res, next) => {
   try {
-    const result = await fetchFastAPI('/federated/status');
+    const result = await callFastAPI('/federated/status', { method: 'GET' });
     return res.status(200).json(result);
   } catch (error) {
-    // Return structured fallback if FastAPI is temporarily unavailable
-    return res.status(200).json({
-      success: true,
-      data: {
-        modelName: 'HealthChain Federated Demand Model',
-        modelVersion: '1.0.0',
-        algorithm: 'FedAvg',
-        status: 'READY',
-        trainingRound: 3,
-        participatingStates: 3,
-        states: ['Madhya Pradesh', 'Rajasthan', 'Gujarat'],
-        dataType: 'Synthetic Demo Dataset',
-        globalAccuracyR2: 0.7775,
-        globalMAE: 4.482
-      }
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.userMessage || error.message,
+      errorType: error.code || 'FASTAPI_ERROR'
     });
   }
 };
@@ -65,17 +86,40 @@ const getFederatedStatus = async (req, res, next) => {
  */
 const getFederatedMetadata = async (req, res, next) => {
   try {
-    const result = await fetchFastAPI('/federated/metadata');
+    const result = await callFastAPI('/federated/metadata', { method: 'GET' });
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
-      message: 'Federated metadata service unavailable: ' + error.message
+      message: error.userMessage || error.message,
+      errorType: error.code || 'FASTAPI_ERROR'
+    });
+  }
+};
+
+/**
+ * @desc    Run Federated Global Model inference
+ * @route   POST /api/federated/predict
+ * @access  Public
+ */
+const predictFederated = async (req, res, next) => {
+  try {
+    const result = await callFastAPI('/federated/predict', {
+      method: 'POST',
+      body: JSON.stringify(req.body)
+    });
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.userMessage || error.message,
+      errorType: error.code || 'FASTAPI_ERROR'
     });
   }
 };
 
 module.exports = {
   getFederatedStatus,
-  getFederatedMetadata
+  getFederatedMetadata,
+  predictFederated
 };

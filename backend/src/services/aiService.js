@@ -5,7 +5,7 @@
  * AI Prediction Microservice running at http://localhost:8000 without duplicating ML code.
  */
 
-const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
+const FASTAPI_URL = process.env.FASTAPI_URL || process.env.FASTAPI_AI_URL || 'http://localhost:8000';
 
 /**
  * Predicts medicine demand & stockout risk via FastAPI

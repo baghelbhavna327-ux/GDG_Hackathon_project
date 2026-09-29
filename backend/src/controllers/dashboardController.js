@@ -44,9 +44,15 @@ const getDashboardSummary = async (req, res, next) => {
     const bedOccupancyPct = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
 
     // Staff Attendance
-    const totalStaffCount = staff.length || phcs.reduce((acc, p) => acc + (p.staffCount || 0), 0);
-    const activeStaffCount = staff.filter(s => s.status === 'ON_DUTY').length || phcs.reduce((acc, p) => acc + (p.activeStaff || 0), 0);
-    const staffAttendancePct = totalStaffCount > 0 ? Math.round((activeStaffCount / totalStaffCount) * 100) : 85;
+    let totalStaffCount = staff.length;
+    let activeStaffCount = staff.filter(s => s.attendanceStatus === 'PRESENT' || s.attendanceStatus === 'HALF_DAY').length;
+
+    if (!totalStaffCount) {
+      totalStaffCount = phcs.reduce((acc, p) => acc + (p.staffCount || 0), 0);
+      activeStaffCount = phcs.reduce((acc, p) => acc + (p.activeStaff || 0), 0);
+    }
+
+    const staffAttendancePct = totalStaffCount > 0 ? Math.min(100, Math.round((activeStaffCount / totalStaffCount) * 100)) : 85;
 
     // Low stock PHCs (unique PHC count where any stock <= 50)
     const lowStockPhcIds = new Set(

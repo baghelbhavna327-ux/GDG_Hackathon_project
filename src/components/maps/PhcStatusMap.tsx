@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { PHCNode } from '../../data/mockData';
 import L from 'leaflet';
-import { MapPin, Info } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 interface PhcStatusMapProps {
   nodes: PHCNode[];
@@ -32,12 +32,14 @@ export const PhcStatusMap: React.FC<PhcStatusMapProps> = ({
         scrollWheelZoom: true,
       });
 
-      // Clean Carto light tile layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 18,
-      }).addTo(map);
+      // English-only Esri World Street Map Tile Layer
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        {
+          attribution: 'Tiles &copy; Esri &mdash; DeLorme, NAVTEQ, USGS, Intermap, METI',
+          maxZoom: 18,
+        }
+      ).addTo(map);
 
       mapInstanceRef.current = map;
     }
@@ -59,10 +61,11 @@ export const PhcStatusMap: React.FC<PhcStatusMapProps> = ({
         markerColor = '#f59e0b'; // Yellow/Amber = warning
       }
 
+      const isSelected = selectedNodeId === node.id;
       const customHtml = `
-        <div class="relative flex items-center justify-center cursor-pointer transition-transform hover:scale-110">
+        <div class="relative flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-110 ${isSelected ? 'scale-125 z-30' : ''}">
           ${pulseRing}
-          <div style="background-color: ${markerColor};" class="relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-white shadow-lg ring-2 ring-white">
+          <div style="background-color: ${markerColor};" class="relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-white shadow-lg ${isSelected ? 'ring-4 ring-teal-400 dark:ring-teal-300 animate-pulse' : 'ring-2 ring-white'}">
             <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
           </div>
         </div>
@@ -89,7 +92,7 @@ export const PhcStatusMap: React.FC<PhcStatusMapProps> = ({
         : '';
 
       const popupHtml = `
-        <div class="p-3.5 min-w-[250px] font-sans">
+        <div class="p-3.5 min-w-[250px] font-sans text-slate-800">
           <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
             <div>
               <h4 class="font-bold text-slate-900 text-sm leading-tight">${node.name}</h4>
@@ -116,7 +119,7 @@ export const PhcStatusMap: React.FC<PhcStatusMapProps> = ({
           </div>
 
           <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
-            <span class="text-slate-500">Dr. ${node.contactPerson.replace('Dr. ', '')}</span>
+            <span class="text-slate-500">${node.contactPerson.replace('Dr. ', 'Dr. ')}</span>
             <span class="font-bold text-teal-600 hover:underline cursor-pointer">View Node Telemetry</span>
           </div>
         </div>
@@ -143,29 +146,33 @@ export const PhcStatusMap: React.FC<PhcStatusMapProps> = ({
   }, [nodes, selectedNodeId, onSelectNode]);
 
   return (
-    <div className="relative rounded-xl border border-slate-200 bg-white p-5 shadow-card">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2 mb-3">
+    <div className="relative rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-card">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-2 mb-3">
         <div>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-teal-600" />
-            <h3 className="font-bold text-slate-900 text-sm sm:text-base">PHC Status Map (India & District Network)</h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <MapPin className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm sm:text-base">PHC Status Map (India & District Network)</h3>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              LIVE • {nodes.length} PHCs
+            </span>
           </div>
-          <p className="text-xs text-slate-500">Live operational status across Primary Health Centers in Central India</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Live operational status across Primary Health Centers in Central India</p>
         </div>
 
         {/* Small Legend */}
-        <div className="flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            <span className="text-slate-700 font-medium">Normal</span>
+            <span className="text-slate-700 dark:text-slate-300 font-medium">Normal</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-            <span className="text-slate-700 font-medium">Warning</span>
+            <span className="text-slate-700 dark:text-slate-300 font-medium">Warning</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
-            <span className="text-rose-700 font-bold">Critical</span>
+            <span className="text-rose-700 dark:text-rose-400 font-bold">Critical</span>
           </div>
         </div>
       </div>
@@ -174,7 +181,7 @@ export const PhcStatusMap: React.FC<PhcStatusMapProps> = ({
       <div 
         ref={mapContainerRef} 
         style={{ height }} 
-        className="w-full rounded-lg border border-slate-200" 
+        className="w-full rounded-lg border border-slate-200 dark:border-slate-700" 
       />
     </div>
   );

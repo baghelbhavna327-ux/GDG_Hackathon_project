@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
 // Import modular routes
 const healthRoutes = require('./routes/healthRoutes');
+const authRoutes = require('./routes/authRoutes');
 const phcRoutes = require('./routes/phcRoutes');
 const medicineRoutes = require('./routes/medicineRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
@@ -16,8 +18,12 @@ const transferRoutes = require('./routes/transferRoutes');
 const predictionRoutes = require('./routes/predictionRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const federatedRoutes = require('./routes/federatedRoutes');
-
-
+const userRoutes = require('./routes/userRoutes');
+const auditLogRoutes = require('./routes/auditLogRoutes');
+const searchRoutes = require('./routes/searchRoutes');
+const supplyRequestRoutes = require('./routes/supplyRequestRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const diseaseEventRoutes = require('./routes/diseaseEventRoutes');
 
 // Centralized error middleware
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -56,12 +62,17 @@ app.use(
   })
 );
 
-// 5. Body Parsing Middleware
+// 5. Body Parsing and Cookie Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
 // 6. Base API Routes
 app.use('/api', healthRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/phcs', phcRoutes);
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/inventory', inventoryRoutes);
@@ -74,6 +85,9 @@ app.use('/api/redistributions', transferRoutes);
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/federated', federatedRoutes);
+app.use('/api/supply-requests', supplyRequestRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/disease-events', diseaseEventRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -87,6 +101,13 @@ app.get('/', (req, res) => {
       clientUrl: clientUrl,
       endpoints: {
         health: '/api/health',
+        auth: {
+          register: '/api/auth/register',
+          login: '/api/auth/login',
+          me: '/api/auth/me',
+          profile: '/api/auth/profile',
+          logout: '/api/auth/logout'
+        },
         dashboardSummary: '/api/dashboard/summary',
         phcs: '/api/phcs',
         medicines: '/api/medicines',

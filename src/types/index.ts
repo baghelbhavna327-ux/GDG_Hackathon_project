@@ -140,3 +140,170 @@ export interface RegionalKPI {
   criticalAlertsCount: number;
   predictedSurgeRiskScore: number; // 0 - 100
 }
+
+export type SupplyRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'FULFILLED';
+export type SupplyRequestUrgency = 'HIGH' | 'CRITICAL';
+
+export interface SupplyRequest {
+  _id: string;
+  requestedBy: {
+    _id?: string;
+    name?: string;
+    email?: string;
+    role?: string;
+    facility?: string;
+  } | string;
+  clinicianId?: string;
+  clinicianName: string;
+  phcId: string;
+  phcName: string;
+  district?: string;
+  state?: string;
+  medicine: string;
+  currentStock: number;
+  predictedDailyDemand: number;
+  predicted7DayDemand: number;
+  daysRemaining: number;
+  shortageQuantity: number;
+  stockOutRisk: InventoryRiskLevel;
+  requestedQuantity: number;
+  urgency: SupplyRequestUrgency;
+  reason: string;
+  status: SupplyRequestStatus;
+  adminComment?: string;
+  approvedQuantity?: number | null;
+  transferredRecordId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSupplyRequestPayload {
+  phcId: string;
+  phcName: string;
+  district?: string;
+  state?: string;
+  medicine: string;
+  currentStock: number;
+  predictedDailyDemand?: number;
+  predicted7DayDemand?: number;
+  daysRemaining?: number;
+  shortageQuantity?: number;
+  stockOutRisk?: InventoryRiskLevel;
+  requestedQuantity: number;
+  urgency: SupplyRequestUrgency;
+  reason: string;
+}
+
+export type NotificationType =
+  | 'SUPPLY_REQUEST'
+  | 'SUPPLY_APPROVED'
+  | 'SUPPLY_REJECTED'
+  | 'SUPPLY_FULFILLED'
+  | 'CRITICAL_STOCK'
+  | 'HIGH_STOCK_RISK'
+  | 'EMERGENCY'
+  | 'REDISTRIBUTION'
+  | 'DISEASE_ALERT'
+  | 'REGIONAL_DEMAND_ALERT';
+
+export interface AppNotification {
+  _id: string;
+  id?: string;
+  recipientUserId?: string | null;
+  recipientRole?: 'admin' | 'health_worker' | 'viewer' | 'all';
+  type: NotificationType;
+  title: string;
+  message: string;
+  relatedEntityId?: string | null;
+  relatedEntityType?: 'SupplyRequest' | 'Transfer' | 'Alert' | 'PHC' | 'Inventory' | 'Emergency' | 'General' | 'DiseaseEvent';
+  actionUrl?: string;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  metadata?: Record<string, any>;
+}
+
+export type DiseaseEventType = 'SEASONAL' | 'OUTBREAK' | 'SURGE' | 'REGIONAL_ALERT';
+export type DiseaseSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface DiseaseAffectedMedicine {
+  medicine: string;
+  impactMultiplier: number;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+export interface DiseaseEvent {
+  _id?: string;
+  diseaseId: string;
+  diseaseName: string;
+  region: string;
+  state: string;
+  district: string;
+  eventType: DiseaseEventType;
+  reportingPeriod: string;
+  severityLevel: DiseaseSeverity;
+  caseCount?: number | null;
+  trendPercentage?: number;
+  impactFactor: number;
+  affectedMedicines?: DiseaseAffectedMedicine[];
+  source: string;
+  sourceType: 'OFFICIAL_GOV' | 'DEMO' | 'SYNTHETIC';
+  sourceUrl?: string;
+  sourceDate: string;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  active: boolean;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DiseaseAdjustedPredictionData {
+  phc: string;
+  state: string;
+  district: string;
+  medicine: string;
+  current_stock: number;
+  baseline: {
+    predicted_daily_demand: number;
+    predicted_7_day_demand: number;
+    days_remaining: number;
+    shortage_quantity: number;
+  };
+  seasonal_context: {
+    month: number;
+    season: string;
+    seasonal_factor: number;
+    primary_concern: string;
+  };
+  disease_impact: {
+    impact_score: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    adjustment_percentage: number;
+    active_signals_count: number;
+    active_signals: Array<{
+      diseaseId: string;
+      diseaseName: string;
+      eventType: string;
+      severityLevel: string;
+      caseCount?: number;
+      trendPercentage?: number;
+      source: string;
+      sourceType: string;
+      sourceDate: string;
+      impactMultiplier: number;
+    }>;
+    contributing_signals: string[];
+  };
+  adjusted_forecast: {
+    predicted_daily_demand: number;
+    predicted_7_day_demand: number;
+    predicted_30_day_demand: number;
+    days_remaining: number;
+    shortage_quantity: number;
+    stock_out_risk: InventoryRiskLevel;
+    requires_supply_request: boolean;
+  };
+  disclaimer: string;
+}
+
+
+

@@ -9,10 +9,10 @@ interface TransferLogTableProps {
 
 export const TransferLogTable: React.FC<TransferLogTableProps> = ({ transfers }) => {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card">
+    <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card transition-colors duration-200">
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm text-slate-600">
-          <thead className="bg-slate-50/75 border-b border-slate-200 text-xs uppercase font-semibold text-slate-500">
+        <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+          <thead className="bg-slate-50/75 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">
             <tr>
               <th scope="col" className="px-5 py-3.5">Dispatch Code</th>
               <th scope="col" className="px-4 py-3.5">Logistics Route</th>
@@ -23,23 +23,23 @@ export const TransferLogTable: React.FC<TransferLogTableProps> = ({ transfers })
               <th scope="col" className="px-4 py-3.5">ETA</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {transfers.map((trf) => (
-              <tr key={trf.id} className="hover:bg-slate-50/80 transition">
-                <td className="px-5 py-4 font-mono font-semibold text-teal-700 text-xs">
+              <tr key={trf.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
+                <td className="px-5 py-4 font-mono font-semibold text-teal-700 dark:text-teal-400 text-xs">
                   {trf.trackingCode}
                 </td>
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="font-semibold text-slate-800">{trf.originFacilityName.split(' ')[0]}...</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{trf.originFacilityName.split(' ')[0]}...</span>
                     <ArrowRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    <span className="font-semibold text-slate-800">{trf.destinationFacilityName.split(' ')[0]}...</span>
-                    <span className="text-slate-400 text-[10px]">({trf.routeDistanceKm} km)</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{trf.destinationFacilityName.split(' ')[0]}...</span>
+                    <span className="text-slate-400 dark:text-slate-500 text-[10px]">({trf.routeDistanceKm} km)</span>
                   </div>
                 </td>
                 <td className="px-4 py-4">
-                  <p className="font-semibold text-slate-900">{trf.resourceName}</p>
-                  <p className="text-xs text-slate-500">{trf.quantity} {trf.unit}</p>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">{trf.resourceName}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{trf.quantity} {trf.unit}</p>
                 </td>
                 <td className="px-4 py-4">
                   <StatusBadge status={trf.priority} />
@@ -47,10 +47,10 @@ export const TransferLogTable: React.FC<TransferLogTableProps> = ({ transfers })
                 <td className="px-4 py-4">
                   <StatusBadge status={trf.status} />
                 </td>
-                <td className="px-4 py-4 text-xs text-slate-600">
+                <td className="px-4 py-4 text-xs text-slate-600 dark:text-slate-400">
                   {trf.dispatchTime}
                 </td>
-                <td className="px-4 py-4 text-xs font-semibold text-slate-900">
+                <td className="px-4 py-4 text-xs font-semibold text-slate-900 dark:text-slate-100">
                   {trf.estimatedArrival}
                 </td>
               </tr>

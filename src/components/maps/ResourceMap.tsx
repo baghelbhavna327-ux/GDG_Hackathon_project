@@ -23,7 +23,7 @@ export const ResourceMap: React.FC<ResourceMapProps> = ({
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
-      // Center on the network geographic midpoint (San Francisco Metro area)
+      // Center on the network geographic midpoint (San Francisco Metro area or India center)
       const map = L.map(mapContainerRef.current, {
         center: [37.7749, -122.4194],
         zoom: 12,
@@ -31,12 +31,14 @@ export const ResourceMap: React.FC<ResourceMapProps> = ({
         scrollWheelZoom: true,
       });
 
-      // Clean, modern light carto basemap
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19,
-      }).addTo(map);
+      // English-only Esri World Street Map basemap
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        {
+          attribution: 'Tiles &copy; Esri &mdash; DeLorme, NAVTEQ, USGS, Intermap, METI',
+          maxZoom: 18,
+        }
+      ).addTo(map);
 
       mapInstanceRef.current = map;
     }
@@ -80,9 +82,9 @@ export const ResourceMap: React.FC<ResourceMapProps> = ({
 
       const marker = L.marker(hospital.coordinates, { icon }).addTo(map);
 
-      // Popup Content
+      // Popup Content strictly in English
       const popupHtml = `
-        <div class="p-3.5 min-w-[240px] font-sans">
+        <div class="p-3.5 min-w-[240px] font-sans text-slate-800">
           <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
             <h4 class="font-bold text-slate-900 text-sm leading-tight">${hospital.name}</h4>
             <span class="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${

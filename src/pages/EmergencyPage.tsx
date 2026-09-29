@@ -4,7 +4,7 @@ import { StatCard } from '../components/common/StatCard';
 import { normalOperationsData, emergencyModeData, SimulationStateData } from '../data/emergencySimulationData';
 import { mockIndiaPHCs } from '../data/indiaPhcData';
 import { mockMedicineInventory } from '../data/medicineInventoryData';
-import { Hospital, PriorityLevel, ResourceCategory } from '../types';
+import { Hospital, PriorityLevel, ResourceCategory, AIAlert } from '../types';
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -46,6 +46,8 @@ import {
   FastAPIEmergencyPredictRequest, 
   FastAPIEmergencyPredictionData 
 } from '../services/aiPredictionService';
+import { EmergencyWhatIfSimulator } from '../components/emergency/EmergencyWhatIfSimulator';
+import { useTranslation } from '../i18n';
 
 interface EmergencyPageProps {
   hospitals: Hospital[];
@@ -58,9 +60,15 @@ interface EmergencyPageProps {
     unit: string;
     priority: PriorityLevel;
   }) => void;
+  alerts?: AIAlert[];
 }
 
-export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreateTransfer }) => {
+export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreateTransfer, alerts = [] }) => {
+  const { t, isHindi } = useTranslation();
+  // Active Critical Emergency Alerts (Single Source of Truth shared with Sidebar)
+  const activeCriticalAlerts = useMemo(() => {
+    return alerts.filter((a) => a.status === 'active' && a.severity === 'critical');
+  }, [alerts]);
   // 1. Selector States (Cascading Hierarchy)
   const [selectedState, setSelectedState] = useState('Madhya Pradesh');
   const [selectedDistrict, setSelectedDistrict] = useState('Guna');
@@ -233,21 +241,21 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
               className={`text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider transition-all flex items-center gap-1.5 ${
                 isEmergencyActive
                   ? 'bg-rose-600 text-white shadow-md animate-pulse'
-                  : 'bg-teal-100 text-teal-800 border border-teal-200'
+                  : 'bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800'
               }`}
             >
-              <span className={`h-2 w-2 rounded-full ${isEmergencyActive ? 'bg-white' : 'bg-teal-600'}`} />
-              {isEmergencyActive ? '🚨 Emergency Surge Active' : 'Standard Baseline Operations'}
+              <span className={`h-2 w-2 rounded-full ${isEmergencyActive ? 'bg-white' : 'bg-teal-600 dark:bg-teal-400'}`} />
+              {isEmergencyActive ? (isHindi ? '🚨 आपातकालीन स्थिति सक्रिय' : '🚨 Emergency Surge Active') : (isHindi ? 'मानक आधारभूत संचालन' : 'Standard Baseline Operations')}
             </span>
-            <span className="text-xs text-slate-500 font-medium">
-              {isEmergencyActive ? 'Regional Crisis Inflow Active' : 'Standard Baseline Operations'}
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              {isEmergencyActive ? (isHindi ? 'क्षेत्रीय संकट अंतर्वाह सक्रिय' : 'Regional Crisis Inflow Active') : (isHindi ? 'मानक आधारभूत संचालन' : 'Standard Baseline Operations')}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1.5">
-            Emergency Simulation Command Center
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight mt-1.5">
+            {t('page.emergency.title')}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-            Evaluate how HealthChain AI dynamically models surge footfall, critical drug deficits, and automated load rebalancing via FastAPI.
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            {t('page.emergency.subtitle')}
           </p>
         </div>
 
@@ -257,7 +265,7 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
             <button
               onClick={handleRunEmergencySimulation}
               disabled={isLoading}
-              className={`inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg transition-all transform cursor-pointer ring-4 ring-rose-200 ${
+              className={`inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg transition-all transform cursor-pointer ring-4 ring-rose-200 dark:ring-rose-950/50 ${
                 isLoading 
                   ? 'opacity-70 cursor-not-allowed' 
                   : 'hover:from-rose-500 hover:to-red-500 hover:scale-105 active:scale-95 animate-pulse'
@@ -266,45 +274,45 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
               {isLoading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  Running Emergency AI Simulation...
+                  {t('emergency.simulating')}
                 </>
               ) : (
                 <>
                   <Siren className="h-5 w-5" />
-                  🚨 Simulate Emergency
+                  {t('dashboard.simulateEmergency')}
                 </>
               )}
             </button>
           ) : (
             <button
               onClick={handleResetSimulation}
-              className="inline-flex items-center gap-2 rounded-xl bg-white border-2 border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 shadow-md hover:bg-slate-100 hover:border-slate-400 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 px-5 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 shadow-md hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-400 transition-all cursor-pointer"
             >
-              <RotateCcw className="h-4 w-4 text-slate-600" />
-              Reset Simulation
+              <RotateCcw className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+              {t('emergency.resetSimulation')}
             </button>
           )}
         </div>
       </div>
 
       {/* Selectors Bar (State -> District -> PHC -> Medicine) */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-card space-y-3">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-card space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 text-teal-600" />
-            <h3 className="font-bold text-slate-900 text-xs sm:text-sm uppercase tracking-wider">
-              Emergency Simulation Parameters
+            <SlidersHorizontal className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm uppercase tracking-wider">
+              {isHindi ? "आपातकालीन सिमुलेशन पैरामीटर" : "Emergency Simulation Parameters"}
             </h3>
           </div>
           <div className="flex items-center gap-2">
             {isLoading && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] text-rose-700 font-bold animate-pulse">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-600" />
-                Running Emergency AI Simulation...
+              <span className="inline-flex items-center gap-1.5 text-[11px] text-rose-700 dark:text-rose-400 font-bold animate-pulse">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-600 dark:text-rose-400" />
+                {t('emergency.simulating')}
               </span>
             )}
-            <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-              FastAPI Endpoint: POST /predict/emergency
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+              FastAPI: POST /predict/emergency
             </span>
           </div>
         </div>
@@ -312,14 +320,14 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
           {/* 1. State Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">State</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{isHindi ? "राज्य" : "State"}</label>
             <select
               value={selectedState}
               onChange={(e) => handleStateChange(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:bg-white focus:border-teal-500 focus:outline-none cursor-pointer"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-medium text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:border-teal-500 focus:outline-none cursor-pointer"
             >
               {statesList.map((st) => (
-                <option key={st} value={st}>
+                <option key={st} value={st} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
                   {st}
                 </option>
               ))}
@@ -328,14 +336,14 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
 
           {/* 2. District Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">District</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{isHindi ? "ज़िला" : "District"}</label>
             <select
               value={selectedDistrict}
               onChange={(e) => handleDistrictChange(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:bg-white focus:border-teal-500 focus:outline-none cursor-pointer"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-medium text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:border-teal-500 focus:outline-none cursor-pointer"
             >
               {districtsList.map((d) => (
-                <option key={d} value={d}>
+                <option key={d} value={d} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
                   {d}
                 </option>
               ))}
@@ -344,14 +352,14 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
 
           {/* 3. PHC Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">PHC Center</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('phc.facilityName')}</label>
             <select
               value={selectedPhc}
               onChange={(e) => handlePhcChange(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:bg-white focus:border-teal-500 focus:outline-none cursor-pointer"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-medium text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:border-teal-500 focus:outline-none cursor-pointer"
             >
               {phcsList.map((p) => (
-                <option key={p} value={p}>
+                <option key={p} value={p} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
                   {p}
                 </option>
               ))}
@@ -360,14 +368,14 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
 
           {/* 4. Medicine Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Medicine Formulary</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">{t('inventory.medicineName')}</label>
             <select
               value={selectedMedicine}
               onChange={(e) => setSelectedMedicine(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:bg-white focus:border-teal-500 focus:outline-none cursor-pointer"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-medium text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:border-teal-500 focus:outline-none cursor-pointer"
             >
               {medicinesList.map((med) => (
-                <option key={med} value={med}>
+                <option key={med} value={med} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">
                   {med}
                 </option>
               ))}
@@ -376,17 +384,29 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
         </div>
 
         {/* Selected Node Summary Strip */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-4">
-            <span><strong>Current Stock:</strong> {currentStockValue} {unitValue}</span>
-            <span><strong>Daily Patients:</strong> {patientCountValue}</span>
-            <span><strong>Base Consumption:</strong> {previousConsumptionValue} {unitValue}/day</span>
+            <span><strong>{t('hero.currentStock')}:</strong> {currentStockValue} {unitValue}</span>
+            <span><strong>{isHindi ? "दैनिक मरीज:" : "Daily Patients:"}</strong> {patientCountValue}</span>
+            <span><strong>{t('inventory.burnRate')}:</strong> {previousConsumptionValue} {unitValue}/{isHindi ? "दिन" : "day"}</span>
           </div>
-          <span className="text-[11px] text-teal-700 font-medium">
+          <span className="text-[11px] text-teal-700 dark:text-teal-400 font-medium">
             Node: {selectedPhc} ({selectedDistrict}, {selectedState})
           </span>
         </div>
       </div>
+
+      {/* Hero What-If Decision Support Simulator */}
+      <EmergencyWhatIfSimulator
+        phcName={selectedPhc}
+        state={selectedState}
+        district={selectedDistrict}
+        medicine={selectedMedicine}
+        currentStock={currentStockValue}
+        patientCount={patientCountValue}
+        previousConsumption={previousConsumptionValue}
+        onInitiateTransfer={(item, qty) => setIsTransferModalOpen(true)}
+      />
 
       {/* Error Banner with Retry Button */}
       {error && (
@@ -444,134 +464,134 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
           {/* Side-by-Side Comparison: Normal vs Emergency Situation */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* 1. NORMAL SITUATION CARD */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-card space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-card space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-teal-500" />
-                  <h3 className="font-extrabold text-xs uppercase tracking-wider text-slate-700">
-                    Normal Baseline Situation
+                  <h3 className="font-extrabold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    {isHindi ? "सामान्य आधारभूत स्थिति" : "Normal Baseline Situation"}
                   </h3>
                 </div>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200">
-                  {predictionData.normal.stock_out_risk} Risk
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                  {predictionData.normal.stock_out_risk} {isHindi ? "जोखिम" : "Risk"}
                 </span>
               </div>
 
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between py-1 border-b border-slate-50">
-                  <span className="text-slate-500">Daily Demand:</span>
-                  <span className="font-bold text-slate-900">{predictionData.normal.predicted_daily_demand} {unitValue}/day</span>
+                <div className="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/60">
+                  <span className="text-slate-500 dark:text-slate-400">{isHindi ? "दैनिक मांग:" : "Daily Demand:"}</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">{predictionData.normal.predicted_daily_demand} {unitValue}/{isHindi ? "दिन" : "day"}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-50">
-                  <span className="text-slate-500">7-Day Demand:</span>
-                  <span className="font-bold text-slate-900">{predictionData.normal.predicted_7_day_demand} {unitValue}</span>
+                <div className="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/60">
+                  <span className="text-slate-500 dark:text-slate-400">{isHindi ? "7-दिवसीय मांग:" : "7-Day Demand:"}</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">{predictionData.normal.predicted_7_day_demand} {unitValue}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-50">
-                  <span className="text-slate-500">Days Remaining:</span>
-                  <span className="font-bold text-teal-700">{predictionData.normal.days_remaining} days</span>
+                <div className="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/60">
+                  <span className="text-slate-500 dark:text-slate-400">{t('hero.daysRemaining')}:</span>
+                  <span className="font-bold text-teal-700 dark:text-teal-400">{predictionData.normal.days_remaining} {isHindi ? "दिन" : "days"}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-50">
-                  <span className="text-slate-500">Estimated Shortage:</span>
-                  <span className="font-bold text-slate-900">{predictionData.normal.shortage_quantity} {unitValue}</span>
+                <div className="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/60">
+                  <span className="text-slate-500 dark:text-slate-400">{t('hero.shortageQuantity')}:</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">{predictionData.normal.shortage_quantity} {unitValue}</span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-slate-500">Current Stock:</span>
-                  <span className="font-bold text-slate-900">{predictionData.current_stock} {unitValue}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t('hero.currentStock')}:</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">{predictionData.current_stock} {unitValue}</span>
                 </div>
               </div>
             </div>
 
             {/* 2. EMERGENCY SITUATION CARD */}
-            <div className="rounded-xl border-2 border-rose-400 bg-rose-50/40 p-5 shadow-card space-y-3">
-              <div className="flex items-center justify-between border-b border-rose-100 pb-2">
+            <div className="rounded-xl border-2 border-rose-400 dark:border-rose-900 bg-rose-50/40 dark:bg-rose-950/30 p-5 shadow-card space-y-3">
+              <div className="flex items-center justify-between border-b border-rose-100 dark:border-rose-900/60 pb-2">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-rose-600 animate-ping" />
-                  <h3 className="font-extrabold text-xs uppercase tracking-wider text-rose-900">
-                    Emergency Surge Situation
+                  <h3 className="font-extrabold text-xs uppercase tracking-wider text-rose-900 dark:text-rose-200">
+                    {isHindi ? "आपातकालीन उछाल स्थिति" : "Emergency Surge Situation"}
                   </h3>
                 </div>
                 <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-rose-600 text-white animate-pulse">
-                  {predictionData.emergency.stock_out_risk} Risk
+                  {predictionData.emergency.stock_out_risk} {isHindi ? "जोखिम" : "Risk"}
                 </span>
               </div>
 
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between py-1 border-b border-rose-100/60">
-                  <span className="text-rose-800 font-medium">Daily Demand:</span>
-                  <span className="font-extrabold text-rose-950">{predictionData.emergency.predicted_daily_demand} {unitValue}/day</span>
+                <div className="flex justify-between py-1 border-b border-rose-100/60 dark:border-rose-900/40">
+                  <span className="text-rose-800 dark:text-rose-300 font-medium">{isHindi ? "दैनिक मांग:" : "Daily Demand:"}</span>
+                  <span className="font-extrabold text-rose-950 dark:text-rose-100">{predictionData.emergency.predicted_daily_demand} {unitValue}/{isHindi ? "दिन" : "day"}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-rose-100/60">
-                  <span className="text-rose-800 font-medium">7-Day Demand:</span>
-                  <span className="font-extrabold text-rose-950">{predictionData.emergency.predicted_7_day_demand} {unitValue}</span>
+                <div className="flex justify-between py-1 border-b border-rose-100/60 dark:border-rose-900/40">
+                  <span className="text-rose-800 dark:text-rose-300 font-medium">{isHindi ? "7-दिवसीय मांग:" : "7-Day Demand:"}</span>
+                  <span className="font-extrabold text-rose-950 dark:text-rose-100">{predictionData.emergency.predicted_7_day_demand} {unitValue}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-rose-100/60">
-                  <span className="text-rose-800 font-medium">Days Remaining:</span>
-                  <span className="font-extrabold text-rose-700">{predictionData.emergency.days_remaining} days</span>
+                <div className="flex justify-between py-1 border-b border-rose-100/60 dark:border-rose-900/40">
+                  <span className="text-rose-800 dark:text-rose-300 font-medium">{t('hero.daysRemaining')}:</span>
+                  <span className="font-extrabold text-rose-700 dark:text-rose-400">{predictionData.emergency.days_remaining} {isHindi ? "दिन" : "days"}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-rose-100/60">
-                  <span className="text-rose-800 font-medium">Estimated Shortage:</span>
-                  <span className="font-extrabold text-rose-700">{predictionData.emergency.shortage_quantity} {unitValue}</span>
+                <div className="flex justify-between py-1 border-b border-rose-100/60 dark:border-rose-900/40">
+                  <span className="text-rose-800 dark:text-rose-300 font-medium">{t('hero.shortageQuantity')}:</span>
+                  <span className="font-extrabold text-rose-700 dark:text-rose-400">{predictionData.emergency.shortage_quantity} {unitValue}</span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-rose-800 font-medium">Current Stock:</span>
-                  <span className="font-extrabold text-rose-950">{predictionData.current_stock} {unitValue}</span>
+                  <span className="text-rose-800 dark:text-rose-300 font-medium">{t('hero.currentStock')}:</span>
+                  <span className="font-extrabold text-rose-950 dark:text-rose-100">{predictionData.current_stock} {unitValue}</span>
                 </div>
               </div>
             </div>
 
             {/* 3. EMERGENCY IMPACT & DELTA CARD */}
-            <div className="rounded-xl border border-amber-300 bg-amber-50/50 p-5 shadow-card space-y-3">
-              <div className="flex items-center justify-between border-b border-amber-200 pb-2">
+            <div className="rounded-xl border border-amber-300 dark:border-amber-900/80 bg-amber-50/50 dark:bg-amber-950/30 p-5 shadow-card space-y-3">
+              <div className="flex items-center justify-between border-b border-amber-200 dark:border-amber-900/60 pb-2">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-amber-700" />
-                  <h3 className="font-extrabold text-xs uppercase tracking-wider text-amber-900">
-                    Emergency Impact Delta
+                  <TrendingUp className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+                  <h3 className="font-extrabold text-xs uppercase tracking-wider text-amber-900 dark:text-amber-200">
+                    {isHindi ? "आपातकालीन प्रभाव विचलन" : "Emergency Impact Delta"}
                   </h3>
                 </div>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-200 text-amber-900">
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-200 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200">
                   FastAPI XGBoost
                 </span>
               </div>
 
               <div className="space-y-2 text-xs">
                 {/* Demand Comparison */}
-                <div className="p-2 rounded bg-white/80 border border-amber-200/60 space-y-0.5">
-                  <div className="flex justify-between text-[11px] font-bold text-slate-700">
-                    <span>Demand Shift:</span>
+                <div className="p-2 rounded bg-white/80 dark:bg-slate-800 border border-amber-200/60 dark:border-amber-900/40 space-y-0.5">
+                  <div className="flex justify-between text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    <span>{isHindi ? "मांग बदलाव:" : "Demand Shift:"}</span>
                     <span className="text-rose-600 font-extrabold">+{predictionData.demand_increase_percentage}%</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400">
                     <span>{predictionData.normal.predicted_daily_demand}</span>
                     <ArrowRight className="h-3 w-3 text-amber-600" />
-                    <span className="font-bold text-rose-700">{predictionData.emergency.predicted_daily_demand} {unitValue}/d</span>
+                    <span className="font-bold text-rose-700 dark:text-rose-400">{predictionData.emergency.predicted_daily_demand} {unitValue}/{isHindi ? "दिन" : "d"}</span>
                   </div>
                 </div>
 
                 {/* Runway Comparison */}
-                <div className="p-2 rounded bg-white/80 border border-amber-200/60 space-y-0.5">
-                  <div className="flex justify-between text-[11px] font-bold text-slate-700">
-                    <span>Runway Compression:</span>
+                <div className="p-2 rounded bg-white/80 dark:bg-slate-800 border border-amber-200/60 dark:border-amber-900/40 space-y-0.5">
+                  <div className="flex justify-between text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    <span>{isHindi ? "रनवे संपीड़न:" : "Runway Compression:"}</span>
                     <span className="text-rose-600 font-extrabold">
-                      -{(predictionData.normal.days_remaining - predictionData.emergency.days_remaining).toFixed(1)} Days
+                      -{(predictionData.normal.days_remaining - predictionData.emergency.days_remaining).toFixed(1)} {isHindi ? "दिन" : "Days"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400">
                     <span>{predictionData.normal.days_remaining}d</span>
                     <ArrowRight className="h-3 w-3 text-amber-600" />
-                    <span className="font-bold text-rose-700">{predictionData.emergency.days_remaining}d</span>
+                    <span className="font-bold text-rose-700 dark:text-rose-400">{predictionData.emergency.days_remaining}d</span>
                   </div>
                 </div>
 
                 {/* Shortage Deficit */}
-                <div className="p-2 rounded bg-white/80 border border-amber-200/60 space-y-0.5">
-                  <div className="flex justify-between text-[11px] font-bold text-slate-700">
-                    <span>Additional Deficit:</span>
-                    <span className="text-rose-700 font-extrabold">+{predictionData.shortage_quantity} {unitValue}</span>
+                <div className="p-2 rounded bg-white/80 dark:bg-slate-800 border border-amber-200/60 dark:border-amber-900/40 space-y-0.5">
+                  <div className="flex justify-between text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    <span>{isHindi ? "अतिरिक्त कमी:" : "Additional Deficit:"}</span>
+                    <span className="text-rose-700 dark:text-rose-400 font-extrabold">+{predictionData.shortage_quantity} {unitValue}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400">
                     <span>{predictionData.normal.shortage_quantity}</span>
                     <ArrowRight className="h-3 w-3 text-amber-600" />
-                    <span className="font-bold text-rose-700">{predictionData.emergency.shortage_quantity} {unitValue}</span>
+                    <span className="font-bold text-rose-700 dark:text-rose-400">{predictionData.emergency.shortage_quantity} {unitValue}</span>
                   </div>
                 </div>
               </div>
@@ -584,9 +604,9 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* KPI 1: Patient Footfall */}
         <StatCard
-          title="Patient Footfall"
-          value={predictionData && isEmergencyActive ? `${Math.round(patientCountValue * 1.65)} / day` : `${patientCountValue} / day`}
-          subtitle={isEmergencyActive ? '+65% Crisis Surge' : 'Normal Daily Footfall'}
+          title={isHindi ? "मरीज़ों का फुटफॉल" : "Patient Footfall"}
+          value={predictionData && isEmergencyActive ? `${Math.round(patientCountValue * 1.65)} / ${isHindi ? 'दिन' : 'day'}` : `${patientCountValue} / ${isHindi ? 'दिन' : 'day'}`}
+          subtitle={isEmergencyActive ? (isHindi ? "+65% संकट उछाल" : "+65% Crisis Surge") : (isHindi ? "सामान्य दैनिक फुटफॉल" : "Normal Daily Footfall")}
           change={isEmergencyActive ? '+65% Surge' : 'Normal'}
           changeType={isEmergencyActive ? 'urgent' : 'neutral'}
           icon={Users}
@@ -596,16 +616,16 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
 
         {/* KPI 2: Medicine Demand */}
         <StatCard
-          title="Medicine Demand"
+          title={isHindi ? "दवा की मांग" : "Medicine Demand"}
           value={
             predictionData && isEmergencyActive 
-              ? `${predictionData.emergency.predicted_daily_demand} ${unitValue}/day` 
-              : `${previousConsumptionValue} ${unitValue}/day`
+              ? `${predictionData.emergency.predicted_daily_demand} ${unitValue}/${isHindi ? 'दिन' : 'day'}` 
+              : `${previousConsumptionValue} ${unitValue}/${isHindi ? 'दिन' : 'day'}`
           }
           subtitle={
             predictionData && isEmergencyActive 
-              ? `+${predictionData.demand_increase_percentage}% Surge` 
-              : 'Stable Usage'
+              ? `+${predictionData.demand_increase_percentage}% ${isHindi ? 'उछाल' : 'Surge'}` 
+              : (isHindi ? 'स्थिर खपत' : 'Stable Usage')
           }
           change={isEmergencyActive ? `+${predictionData?.demand_increase_percentage ?? 72}% Surge` : 'Stable'}
           changeType={isEmergencyActive ? 'urgent' : 'neutral'}
@@ -614,21 +634,21 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
           iconColor={isEmergencyActive ? 'text-rose-700' : 'text-teal-600'}
         />
 
-        {/* KPI 3: Critical PHCs */}
+        {/* KPI 3: Critical Emergencies */}
         <StatCard
-          title="Critical PHCs"
-          value={isEmergencyActive ? '24 in Red Zone' : '8 on Watch'}
-          subtitle={simData.criticalPhcsChange}
-          change={isEmergencyActive ? '24 in Red Zone' : '8 on Watch'}
-          changeType={isEmergencyActive ? 'urgent' : 'increase'}
-          icon={Building2}
-          iconBg={isEmergencyActive ? 'bg-rose-100' : 'bg-amber-50'}
-          iconColor={isEmergencyActive ? 'text-rose-700' : 'text-amber-600'}
+          title={isHindi ? "गंभीर आपात स्थितियाँ" : "Critical Emergencies"}
+          value={isEmergencyActive ? (isHindi ? '24 रेड ज़ोन में' : '24 in Red Zone') : `${activeCriticalAlerts.length} ${isHindi ? 'सक्रिय' : 'Active'}`}
+          subtitle={isEmergencyActive ? simData.criticalPhcsChange : `${activeCriticalAlerts.length} ${isHindi ? 'गंभीर घटनाएं सक्रिय' : 'Critical incidents active'}`}
+          change={isEmergencyActive ? '24 Red Zone' : `${activeCriticalAlerts.length} Critical`}
+          changeType={activeCriticalAlerts.length > 0 || isEmergencyActive ? 'urgent' : 'increase'}
+          icon={AlertOctagon}
+          iconBg={isEmergencyActive || activeCriticalAlerts.length > 0 ? 'bg-rose-100 dark:bg-rose-950/60' : 'bg-amber-50 dark:bg-amber-950/40'}
+          iconColor={isEmergencyActive || activeCriticalAlerts.length > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'}
         />
 
         {/* KPI 4: Bed Occupancy */}
         <StatCard
-          title="Bed Occupancy"
+          title={t('phc.occupancy')}
           value={simData.bedOccupancy}
           subtitle={simData.bedOccupancyChange}
           change={isEmergencyActive ? '82% Critical' : '52% Safe'}
@@ -812,24 +832,100 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
         </div>
       </div>
 
+      {/* Real-time Active Critical Emergency Alerts (Single Source of Truth aligned with Sidebar) */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <AlertOctagon className="h-5 w-5 text-rose-600 animate-pulse" />
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+              Active Critical Emergency Queue ({activeCriticalAlerts.length})
+            </h3>
+          </div>
+          <span className="text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 px-2.5 py-1 rounded-full border border-rose-200 dark:border-rose-800">
+            {activeCriticalAlerts.length} Critical Emergencies Active
+          </span>
+        </div>
+
+        {activeCriticalAlerts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeCriticalAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="rounded-xl border-2 border-rose-500/60 bg-gradient-to-br from-rose-50/40 via-white to-amber-50/30 dark:from-rose-950/30 dark:via-slate-900 dark:to-slate-900 p-5 shadow-card hover:shadow-elevated transition flex flex-col justify-between space-y-3"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 border-b border-rose-100 dark:border-rose-900/40 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-2.5 w-2.5 rounded-full bg-rose-600 animate-ping shrink-0" />
+                      <span className="font-extrabold text-slate-900 dark:text-slate-100 text-sm">
+                        {alert.title}
+                      </span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-600 text-white animate-pulse shrink-0">
+                      CRITICAL
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    {alert.message}
+                  </p>
+
+                  <div className="rounded-lg bg-rose-100/60 dark:bg-rose-950/50 p-3 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-900 dark:text-rose-200 space-y-1">
+                    <p className="font-bold flex items-center gap-1.5 text-rose-900 dark:text-rose-200">
+                      <ShieldAlert className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                      Recommended Emergency Protocol:
+                    </p>
+                    <p className="text-rose-800 dark:text-rose-300 leading-relaxed">
+                      {alert.actionRecommended}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-3 border-t border-rose-100 dark:border-rose-900/40 text-xs">
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-[11px]">
+                    <span className="font-semibold text-teal-700 dark:text-teal-400">{alert.facilityName}</span>
+                    <span>•</span>
+                    <span>{alert.timestamp}</span>
+                    <span>•</span>
+                    <span className="font-medium text-amber-700 dark:text-amber-400">{alert.confidenceScore}% Confidence</span>
+                  </div>
+
+                  <button
+                    onClick={() => setIsTransferModalOpen(true)}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 font-bold text-xs shadow-sm transition cursor-pointer shrink-0"
+                  >
+                    <Truck className="h-3.5 w-3.5" />
+                    Dispatch Transfer
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-center text-xs text-slate-500 dark:text-slate-400">
+            No active critical emergencies. All monitored healthcare facilities are operating within nominal thresholds.
+          </div>
+        )}
+      </div>
+
       {/* Critical PHC List Table */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flame className={`h-5 w-5 ${isEmergencyActive ? 'text-rose-600 animate-bounce' : 'text-slate-500'}`} />
-            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
               {isEmergencyActive ? `Critical Emergency PHC Cluster List (${simData.criticalPhcList.length} Facilities Under Alert)` : `Monitored Facilities (${simData.criticalPhcList.length})`}
             </h3>
           </div>
-          <span className="text-xs text-slate-500 font-medium">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
             Status updated every 60s
           </span>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-600">
-              <thead className="bg-slate-50 border-b border-slate-200 uppercase font-bold text-[11px] text-slate-500">
+            <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 uppercase font-bold text-[11px] text-slate-500 dark:text-slate-400">
                 <tr>
                   <th scope="col" className="px-4 py-3.5">PHC Facility</th>
                   <th scope="col" className="px-4 py-3.5">District & State</th>
@@ -839,28 +935,28 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
                   <th scope="col" className="px-3 py-3.5 text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {simData.criticalPhcList.map((phc, index) => {
                   const isCritical = phc.status === 'critical';
 
                   return (
                     <tr 
                       key={index}
-                      className={`hover:bg-slate-50 transition ${isCritical ? 'bg-rose-50/20' : ''}`}
+                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition ${isCritical ? 'bg-rose-50/20 dark:bg-rose-950/20' : ''}`}
                     >
-                      <td className="px-4 py-3.5 font-extrabold text-slate-900">
+                      <td className="px-4 py-3.5 font-extrabold text-slate-900 dark:text-slate-100">
                         {phc.name}
                       </td>
-                      <td className="px-4 py-3.5 text-slate-700">
+                      <td className="px-4 py-3.5 text-slate-700 dark:text-slate-300">
                         {phc.district}, {phc.state}
                       </td>
                       <td className="px-3 py-3.5">
                         <div className="w-28">
                           <div className="flex justify-between text-[11px] font-bold mb-0.5">
-                            <span>{phc.bedOccupancy}</span>
-                            <span className={phc.occupancyPct > 85 ? 'text-rose-600' : 'text-slate-600'}>{phc.occupancyPct}%</span>
+                            <span className="text-slate-900 dark:text-slate-100">{phc.bedOccupancy}</span>
+                            <span className={phc.occupancyPct > 85 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600 dark:text-slate-400'}>{phc.occupancyPct}%</span>
                           </div>
-                          <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                          <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                             <div 
                               className={`h-full rounded-full ${phc.occupancyPct > 85 ? 'bg-rose-600' : 'bg-teal-500'}`}
                               style={{ width: `${phc.occupancyPct}%` }}
@@ -870,12 +966,12 @@ export const EmergencyPage: React.FC<EmergencyPageProps> = ({ hospitals, onCreat
                       </td>
                       <td className="px-3 py-3.5">
                         <span className={`font-extrabold px-2 py-0.5 rounded text-[11px] ${
-                          isCritical ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-slate-100 text-slate-700'
+                          isCritical ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                         }`}>
                           {phc.medicineRunway}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 text-slate-800 font-medium">
+                      <td className="px-4 py-3.5 text-slate-800 dark:text-slate-200 font-medium">
                         {phc.emergencyNeed}
                       </td>
                       <td className="px-3 py-3.5 text-right">

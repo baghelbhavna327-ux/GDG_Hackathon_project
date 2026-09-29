@@ -4,17 +4,32 @@ Model Loader and Inference Engine for HealthChain AI
 
 import os
 import sys
-import joblib
-import numpy as np
-import pandas as pd
 from typing import Dict, Any, Tuple
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
+try:
+    import joblib
+except ImportError:
+    joblib = None
 
 # Ensure parent directory is in sys.path for unpickling XGBoostDemandPipeline
 PARENT_DIR = os.path.dirname(os.path.dirname(__file__))
 if PARENT_DIR not in sys.path:
     sys.path.insert(0, PARENT_DIR)
 
-from pipeline import XGBoostDemandPipeline
+try:
+    from pipeline import XGBoostDemandPipeline
+except Exception:
+    XGBoostDemandPipeline = None
 
 MODEL_PATH = os.path.join(PARENT_DIR, 'models', 'demand_model.pkl')
 

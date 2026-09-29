@@ -109,7 +109,7 @@ export const ResourcesPage: React.FC<ResourcesPageProps> = ({ hospitals, onCreat
 
       {/* Facility Table */}
       <div className="space-y-3">
-        <h3 className="text-base font-bold text-slate-900">Hospital Resource Distribution Table</h3>
+        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Hospital Resource Distribution Table</h3>
         <HospitalStatusTable
           hospitals={hospitals}
           onSelectHospital={(h) => setSelectedHospital(h)}
@@ -126,55 +126,55 @@ export const ResourcesPage: React.FC<ResourcesPageProps> = ({ hospitals, onCreat
           maxWidth="xl"
         >
           <div className="space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4 border border-slate-200">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 p-4 border border-slate-200 dark:border-slate-700">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <StatusBadge status={selectedHospital.status} size="md" />
-                  <span className="text-xs font-semibold text-slate-600">
+                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                     Surge Probability: {selectedHospital.predictedSurgeRisk}%
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 flex items-center gap-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                   <MapPin className="h-3.5 w-3.5" />
                   {selectedHospital.address}
                 </p>
               </div>
               <div className="text-right">
-                <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                  <Phone className="h-3.5 w-3.5 text-teal-600" />
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                  <Phone className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
                   {selectedHospital.phone}
                 </span>
-                <span className="text-[10px] text-slate-500">24/7 Dispatch Unit</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">24/7 Dispatch Unit</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-              <div className="rounded-lg border border-slate-200 p-3 bg-white">
-                <p className="text-[10px] uppercase font-bold text-slate-400">Total Beds</p>
-                <p className="text-lg font-bold text-slate-900">{selectedHospital.occupiedBeds}/{selectedHospital.totalBeds}</p>
-                <p className="text-[10px] text-teal-600 font-semibold">{selectedHospital.totalBeds - selectedHospital.occupiedBeds} Free</p>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-white dark:bg-slate-800">
+                <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400">Total Beds</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{selectedHospital.occupiedBeds}/{selectedHospital.totalBeds}</p>
+                <p className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">{selectedHospital.totalBeds - selectedHospital.occupiedBeds} Free</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-3 bg-white">
-                <p className="text-[10px] uppercase font-bold text-slate-400">ICU Capacity</p>
-                <p className="text-lg font-bold text-slate-900">{selectedHospital.icuOccupied}/{selectedHospital.icuTotal}</p>
-                <p className="text-[10px] text-rose-600 font-bold">{selectedHospital.icuTotal - selectedHospital.icuOccupied} Free</p>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-white dark:bg-slate-800">
+                <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400">ICU Capacity</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{selectedHospital.icuOccupied}/{selectedHospital.icuTotal}</p>
+                <p className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">{selectedHospital.icuTotal - selectedHospital.icuOccupied} Free</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-3 bg-white">
-                <p className="text-[10px] uppercase font-bold text-slate-400">Ventilators</p>
-                <p className="text-lg font-bold text-slate-900">{selectedHospital.ventilatorsOccupied}/{selectedHospital.ventilatorsTotal}</p>
-                <p className="text-[10px] text-slate-500">{selectedHospital.ventilatorsTotal - selectedHospital.ventilatorsOccupied} Free</p>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-white dark:bg-slate-800">
+                <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400">Ventilators</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{selectedHospital.ventilatorsOccupied}/{selectedHospital.ventilatorsTotal}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">{selectedHospital.ventilatorsTotal - selectedHospital.ventilatorsOccupied} Free</p>
               </div>
-              <div className="rounded-lg border border-slate-200 p-3 bg-white">
-                <p className="text-[10px] uppercase font-bold text-slate-400">Oxygen Level</p>
-                <p className="text-lg font-bold text-slate-900">{selectedHospital.oxygenLevelPct}%</p>
-                <p className="text-[10px] text-teal-600 font-semibold">Regulated Feed</p>
+              <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-white dark:bg-slate-800">
+                <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400">Oxygen Level</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{selectedHospital.oxygenLevelPct}%</p>
+                <p className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">Regulated Feed</p>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
               <button
                 onClick={() => setSelectedHospital(null)}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Close
               </button>

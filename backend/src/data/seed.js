@@ -25,7 +25,8 @@ const {
   PatientFootfall,
   Alert,
   Prediction,
-  ResourceTransfer
+  ResourceTransfer,
+  User
 } = require('../models');
 
 // Load env vars
@@ -50,7 +51,8 @@ const seedDatabase = async () => {
       PatientFootfall.deleteMany({}),
       Alert.deleteMany({}),
       Prediction.deleteMany({}),
-      ResourceTransfer.deleteMany({})
+      ResourceTransfer.deleteMany({}),
+      User.deleteMany({})
     ]);
     console.log('[Seeder] Old data cleared.');
 
@@ -578,6 +580,46 @@ const seedDatabase = async () => {
     await ResourceTransfer.insertMany(transferList);
     console.log(`[Seeder] Seeded ${transferList.length} redistribution transfers.`);
 
+    // 10. Seed Default User Accounts
+    console.log('[Seeder] Seeding default authentication accounts...');
+    const defaultUsers = [
+      {
+        name: 'Dr. Rachel Vance',
+        email: 'admin@healthchain.gov.in',
+        password: 'Admin@123456',
+        role: 'admin',
+        department: 'Regional Healthcare Crisis Directorate',
+        facility: 'National Command Center',
+        phoneNumber: '+91 98111 22334',
+        dutyStatus: 'on_duty'
+      },
+      {
+        name: 'Dr. Priya Sharma',
+        email: 'worker@healthchain.gov.in',
+        password: 'Worker@123456',
+        role: 'health_worker',
+        department: 'Primary Healthcare Operations',
+        facility: 'PHC Sehore North',
+        phoneNumber: '+91 98222 33445',
+        dutyStatus: 'on_duty'
+      },
+      {
+        name: 'Rajesh Gupta',
+        email: 'viewer@healthchain.gov.in',
+        password: 'Viewer@123456',
+        role: 'viewer',
+        department: 'Public Health Telemetry & Oversight',
+        facility: 'State Health Mission Registry',
+        phoneNumber: '+91 98333 44556',
+        dutyStatus: 'on_duty'
+      }
+    ];
+
+    for (const userData of defaultUsers) {
+      await User.create(userData);
+    }
+    console.log(`[Seeder] Seeded ${defaultUsers.length} user accounts.`);
+
     console.log('----------------------------------------------------');
     console.log('✅ HealthChain AI Database Seeding Complete!');
     console.log(`- PHCs: ${insertedPHCs.length}`);
@@ -589,6 +631,7 @@ const seedDatabase = async () => {
     console.log(`- Alerts: ${alertList.length}`);
     console.log(`- Predictions: ${predictionsList.length}`);
     console.log(`- Transfers: ${transferList.length}`);
+    console.log(`- Users: ${defaultUsers.length}`);
     console.log('----------------------------------------------------');
 
     await mongoose.disconnect();

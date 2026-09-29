@@ -18,6 +18,7 @@ import { MedicineDemandChart } from '../components/charts/MedicineDemandChart';
 import { PatientFootfallChart } from '../components/charts/PatientFootfallChart';
 import { CriticalAlertsList } from '../components/dashboard/CriticalAlertsList';
 import { AiRecommendationCard } from '../components/dashboard/AiRecommendationCard';
+import { RegionalDiseaseIntelligencePanel } from '../components/dashboard/RegionalDiseaseIntelligencePanel';
 import { NewTransferModal } from '../components/ai/NewTransferModal';
 import { mockPHCNodes } from '../data/mockData';
 import { Hospital, AIAlert, ResourceTransfer, PriorityLevel, ResourceCategory, DemandForecastPoint } from '../types';
@@ -56,15 +57,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-1">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-2.5 py-0.5 rounded-full border border-teal-200 dark:border-teal-800/60">
               National Health Grid • Central Zone
             </span>
-            <span className="text-xs text-slate-400 font-medium">Updated 2 mins ago</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Updated 2 mins ago</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
             Good Morning, Administrator
           </h1>
-          <p className="text-sm text-slate-500 font-medium mt-0.5">
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
             National Healthcare Resource Overview & Predictive Logistics Command
           </p>
         </div>
@@ -72,7 +73,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <div className="flex items-center gap-2.5 shrink-0">
           <button
             onClick={() => setIsTransferModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-teal-700 transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 dark:bg-teal-500 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-teal-700 dark:hover:bg-teal-600 transition"
           >
             <PlusCircle className="h-4 w-4" />
             Dispatch Rebalance
@@ -150,7 +151,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <PatientFootfallChart />
       </div>
 
-      {/* SECTION 4 — CRITICAL ALERTS */}
+      {/* SECTION 4 — REGIONAL DISEASE INTELLIGENCE */}
+      <div className="space-y-2">
+        <RegionalDiseaseIntelligencePanel />
+      </div>
+
+      {/* SECTION 5 — CRITICAL ALERTS */}
       <div className="space-y-2">
         <CriticalAlertsList
           onResolveAlert={(id) => onMitigateAlert(id)}

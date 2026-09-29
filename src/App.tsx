@@ -1,8 +1,13 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardLayout } from './layouts/DashboardLayout';
-import { DashboardPage } from './pages/DashboardPage';
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { ClinicianDashboardPage } from './pages/ClinicianDashboardPage';
+import { ViewerDashboardPage } from './pages/ViewerDashboardPage';
+import { UserManagementPage } from './pages/UserManagementPage';
+import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { PhcMapPage } from './pages/PhcMapPage';
+import { PhcManagementPage } from './pages/PhcManagementPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { ResourcesPage } from './pages/ResourcesPage';
 import { ForecastPage } from './pages/ForecastPage';
@@ -11,12 +16,40 @@ import { EmergencyPage } from './pages/EmergencyPage';
 import { FederatedAIPage } from './pages/FederatedAIPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { LoginPage } from './pages/LoginPage';
+import { SignupPage } from './pages/SignupPage';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
+import { LanguageProvider } from './i18n';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { PublicRoute } from './components/auth/PublicRoute';
 import { useHealthcareData } from './hooks/useHealthcareData';
 
-export const App: React.FC = () => {
+// Component that dynamically redirects authenticated users to their specific role dashboard
+const RoleDashboardRedirect: React.FC = () => {
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role === 'admin') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  if (user.role === 'viewer') {
+    return <Navigate to="/viewer/dashboard" replace />;
+  }
+  return <Navigate to="/clinician/dashboard" replace />;
+};
+
+const AuthenticatedApp: React.FC = () => {
   const {
     filteredHospitals,
-    filteredSupplies,
     alerts,
     forecastData,
     transfers,
@@ -30,10 +63,35 @@ export const App: React.FC = () => {
   } = useHealthcareData();
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          element={
+    <Routes>
+      {/* 1. Root / Route: If unauthenticated, redirect to /login; If authenticated, route by role */}
+      <Route path="/" element={<RoleDashboardRedirect />} />
+
+      {/* 2. Public Authentication Routes (Wrapped in PublicRoute) */}
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <SignupPage />
+          </PublicRoute>
+        }
+      />
+
+      {/* 3. 403 Forbidden Unauthorized Screen */}
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+      {/* 4. Protected Dashboard Layout Routes */}
+      <Route
+        element={
+          <ProtectedRoute>
             <DashboardLayout
               alerts={alerts}
               searchQuery={searchQuery}
@@ -41,13 +99,36 @@ export const App: React.FC = () => {
               selectedRegion={selectedRegion}
               onRegionChange={setSelectedRegion}
             />
+          </ProtectedRoute>
+        }
+      >
+        {/* /dashboard redirects authenticated user to their role dashboard */}
+        <Route path="dashboard" element={<RoleDashboardRedirect />} />
+
+        {/* 4.1 Admin Dedicated Dashboard (Admin only) */}
+        <Route
+          path="admin/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboardPage
+                hospitals={filteredHospitals}
+                alerts={alerts}
+                forecastData={forecastData}
+                transfers={transfers}
+                onDismissAlert={dismissAlert}
+                onMitigateAlert={mitigateAlert}
+                onCreateTransfer={createTransfer}
+              />
+            </ProtectedRoute>
           }
-        >
-          {/* Index & /dashboard route */}
-          <Route
-            index
-            element={
-              <DashboardPage
+        />
+
+        {/* 4.2 Clinician Dedicated Dashboard (Clinician & Admin) */}
+        <Route
+          path="clinician/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'health_worker']}>
+              <ClinicianDashboardPage
                 hospitals={filteredHospitals}
                 alerts={alerts}
                 forecastData={forecastData}
@@ -56,106 +137,147 @@ export const App: React.FC = () => {
                 onMitigateAlert={mitigateAlert}
                 onCreateTransfer={createTransfer}
               />
-            }
-          />
-          <Route
-            path="dashboard"
-            element={
-              <DashboardPage
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 4.3 Viewer Dedicated Dashboard (Viewer, Clinician, Admin) */}
+        <Route
+          path="viewer/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'health_worker', 'viewer']}>
+              <ViewerDashboardPage
                 hospitals={filteredHospitals}
                 alerts={alerts}
                 forecastData={forecastData}
                 transfers={transfers}
-                onDismissAlert={dismissAlert}
-                onMitigateAlert={mitigateAlert}
-                onCreateTransfer={createTransfer}
               />
-            }
-          />
+            </ProtectedRoute>
+          }
+        />
 
-          {/* PHC Map Route */}
-          <Route
-            path="phc-map"
-            element={
-              <PhcMapPage
+        {/* 4.4 Admin User Management & Audit Logs */}
+        <Route
+          path="admin/users"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <UserManagementPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 4.5 Operations Routes */}
+        <Route
+          path="admin/phcs"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <PhcManagementPage
                 hospitals={filteredHospitals}
                 onCreateTransfer={createTransfer}
               />
-            }
-          />
+            </ProtectedRoute>
+          }
+        />
 
-          {/* Medicine Inventory Route */}
-          <Route
-            path="inventory"
-            element={
-              <InventoryPage
-                hospitals={filteredHospitals}
-                onCreateTransfer={createTransfer}
-              />
-            }
-          />
+        <Route
+          path="phc-management"
+          element={
+            <PhcManagementPage
+              hospitals={filteredHospitals}
+              onCreateTransfer={createTransfer}
+            />
+          }
+        />
 
-          {/* Resources & Beds Route */}
-          <Route
-            path="resources"
-            element={
-              <ResourcesPage
-                hospitals={filteredHospitals}
-                onCreateTransfer={createTransfer}
-              />
-            }
-          />
+        <Route
+          path="phc-map"
+          element={
+            <PhcMapPage
+              hospitals={filteredHospitals}
+              onCreateTransfer={createTransfer}
+            />
+          }
+        />
 
-          {/* AI Forecast Route */}
-          <Route
-            path="forecast"
-            element={
-              <ForecastPage
-                hospitals={filteredHospitals}
-                onCreateTransfer={createTransfer}
-              />
-            }
-          />
+        <Route
+          path="inventory"
+          element={
+            <InventoryPage
+              hospitals={filteredHospitals}
+              onCreateTransfer={createTransfer}
+            />
+          }
+        />
 
-          {/* Redistribution Route */}
-          <Route
-            path="redistribution"
-            element={
-              <RedistributionPage
-                hospitals={filteredHospitals}
-                onCreateTransfer={createTransfer}
-              />
-            }
-          />
+        <Route
+          path="resources"
+          element={
+            <ResourcesPage
+              hospitals={filteredHospitals}
+              onCreateTransfer={createTransfer}
+            />
+          }
+        />
 
-          {/* Emergency Mode Route */}
-          <Route
-            path="emergency"
-            element={
-              <EmergencyPage
-                hospitals={filteredHospitals}
-                onCreateTransfer={createTransfer}
-              />
-            }
-          />
+        <Route
+          path="forecast"
+          element={
+            <ForecastPage
+              hospitals={filteredHospitals}
+              onCreateTransfer={createTransfer}
+            />
+          }
+        />
 
-          {/* Federated AI Dashboard Route */}
-          <Route
-            path="federated-ai"
-            element={<FederatedAIPage />}
-          />
+        <Route
+          path="redistribution"
+          element={
+            <RedistributionPage
+              hospitals={filteredHospitals}
+              onCreateTransfer={createTransfer}
+            />
+          }
+        />
 
-          {/* Settings Route */}
-          <Route path="settings" element={<SettingsPage />} />
+        <Route
+          path="emergency"
+          element={
+            <EmergencyPage
+              hospitals={filteredHospitals}
+              onCreateTransfer={createTransfer}
+              alerts={alerts}
+            />
+          }
+        />
 
-          {/* Profile Route */}
-          <Route path="profile" element={<ProfilePage />} />
+        <Route
+          path="federated-ai"
+          element={<FederatedAIPage />}
+        />
 
-          {/* Wildcard fallback to dashboard */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+      </Route>
+
+      {/* 5. Fallback Route: Redirect to root */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <LanguageProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <AuthenticatedApp />
+            </BrowserRouter>
+          </AuthProvider>
+        </ToastProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 };
 

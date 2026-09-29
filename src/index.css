@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 selection:bg-teal-100 selection:text-teal-900;
+    @apply bg-slate-50 text-slate-900 selection:bg-teal-100 selection:text-teal-900 dark:bg-slate-950 dark:text-slate-50 dark:selection:bg-teal-900 dark:selection:text-teal-100;
   }
 }
 
@@ -13,16 +13,37 @@
   width: 100%;
   height: 100%;
   border-radius: 0.75rem;
-  z-index: 10;
   font-family: inherit;
+  cursor: grab;
+}
+
+.leaflet-container:active,
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-container {
+  cursor: grabbing !important;
 }
 
 .leaflet-popup-content-wrapper {
   border-radius: 0.75rem !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2) !important;
   border: 1px solid #e2e8f0 !important;
   padding: 0 !important;
   overflow: hidden;
+  background: #ffffff !important;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+.leaflet-popup-tip {
+  background: #ffffff !important;
+}
+
+.dark .leaflet-popup-tip {
+  background: #1e293b !important;
 }
 
 .leaflet-popup-content {
@@ -43,6 +64,12 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -51,10 +78,154 @@
 ::-webkit-scrollbar-track {
   background: #f1f5f9;
 }
+.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 3px;
 }
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ==========================================================================
+   HEALTHCHAIN AI — PREMIUM MOTION & 3D INTERACTION LAYER
+   ========================================================================== */
+
+/* 3D Perspective & Depth */
+.perspective-800 {
+  perspective: 800px;
+}
+.perspective-1000 {
+  perspective: 1000px;
+}
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* Subtle Interactive Card Tilt on Hover */
+.card-hover-interactive {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+  will-change: transform, box-shadow;
+}
+.card-hover-interactive:hover {
+  transform: translateY(-2px) scale(1.012);
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.04);
+}
+.dark .card-hover-interactive:hover {
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.4), 0 4px 8px -4px rgba(0, 0, 0, 0.25);
+}
+
+/* 3D Depth Card */
+.card-3d-depth {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0);
+}
+.card-3d-depth:hover {
+  transform: perspective(1000px) translateY(-3px) rotateX(1deg) rotateY(-1deg) translateZ(8px);
+}
+
+/* Button Micro-interactions */
+.btn-interactive {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), filter 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  will-change: transform;
+}
+.btn-interactive:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+.btn-interactive:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* AI Intelligence Glow */
+.ai-glow-subtle {
+  position: relative;
+}
+.ai-glow-subtle::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.3), rgba(2, 132, 199, 0.2), rgba(124, 58, 237, 0.15));
+  z-index: -1;
+  opacity: 0.7;
+  filter: blur(8px);
+  transition: opacity 0.3s ease;
+}
+.ai-glow-subtle:hover::after {
+  opacity: 1;
+  filter: blur(12px);
+}
+
+/* Typing Indicator Animation */
+.typing-dot {
+  animation: typingBounce 1.4s infinite ease-in-out both;
+}
+.typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* Typewriter Cursor */
+.typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background-color: currentColor;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  animation: cursorBlink 1s infinite steps(1);
+}
+@keyframes cursorBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Staggered Child Entry Animations */
+.animate-stagger-1 { animation-delay: 50ms; }
+.animate-stagger-2 { animation-delay: 100ms; }
+.animate-stagger-3 { animation-delay: 150ms; }
+.animate-stagger-4 { animation-delay: 200ms; }
+.animate-stagger-5 { animation-delay: 250ms; }
+.animate-stagger-6 { animation-delay: 300ms; }
+
+/* Accessible Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card-hover-interactive:hover,
+  .card-3d-depth:hover,
+  .btn-interactive:hover,
+  .btn-interactive:active {
+    transform: none !important;
+  }
+  .typewriter-cursor {
+    display: none !important;
+  }
 }

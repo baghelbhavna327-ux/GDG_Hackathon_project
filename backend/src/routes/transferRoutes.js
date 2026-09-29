@@ -8,6 +8,7 @@ const {
   createTransfer,
   updateTransferStatus
 } = require('../controllers/transferController');
+const { protect, authorize } = require('../middleware/auth');
 
 // Pending redistribution recommendations
 router.get('/pending', getPendingTransfers);
@@ -21,11 +22,10 @@ router.get('/', getAllTransfers);
 // Single transfer record by ID
 router.get('/:id', getTransferById);
 
-// Create new transfer
-router.post('/', createTransfer);
+// Create new transfer (Admin and Clinician/Health Worker only)
+router.post('/', protect, authorize('admin', 'health_worker'), createTransfer);
 
-// Update transfer status
-router.put('/:id', updateTransferStatus);
+// Update transfer status (Admin and Clinician/Health Worker only)
+router.put('/:id', protect, authorize('admin', 'health_worker'), updateTransferStatus);
 
 module.exports = router;
-

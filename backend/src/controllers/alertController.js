@@ -1,4 +1,5 @@
 const { Alert, PHC } = require('../models');
+const { createNotification } = require('../utils/notificationHelper');
 
 /**
  * Helper to format alert response objects
@@ -239,6 +240,31 @@ const createAlert = async (req, res, next) => {
     const populated = await Alert.findById(newAlert._id)
       .populate('phcId', 'name district state')
       .lean();
+
+    // Trigger notification if critical or emergency
+    try {
+      const phcName = populated.phcId ? populated.phcId.name : 'Monitored PHC';
+      const isEmergency = type.toUpperCase() === 'EMERGENCY' || finalSeverity === 'CRITICAL';
+      const notifType = type.toUpperCase() === 'EMERGENCY' ? 'EMERGENCY' : (finalSeverity === 'CRITICAL' ? 'CRITICAL_STOCK' : 'HIGH_STOCK_RISK');
+
+      await createNotification({
+        recipientRole: 'all',
+        type: notifType,
+        title: isEmergency ? 'Emergency Alert' : (finalSeverity === 'CRITICAL' ? 'Critical Stock Risk' : 'High Stock Risk'),
+        message: `${phcName} — ${title}. ${message}`,
+        relatedEntityId: newAlert._id.toString(),
+        relatedEntityType: 'Alert',
+        actionUrl: isEmergency ? '/emergency' : '/inventory',
+        deduplicateWindowMinutes: 30,
+        metadata: {
+          alertId: newAlert._id.toString(),
+          severity: finalSeverity,
+          phcName
+        }
+      });
+    } catch (notifErr) {
+      console.warn('Alert notification non-fatal note:', notifErr.message);
+    }
 
     return res.status(201).json({
       success: true,

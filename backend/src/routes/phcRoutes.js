@@ -6,7 +6,10 @@ const {
   getCriticalPHCs,
   getPHCsByState,
   getPHCsByDistrict,
-  getPHCById
+  getPHCById,
+  createPHC,
+  updatePHC,
+  deletePHC
 } = require('../controllers/phcController');
 
 // Aggregated dashboard statistics
@@ -24,7 +27,16 @@ router.get('/district/:district', getPHCsByDistrict);
 // Get all PHCs (supports query params: ?state=...&district=...&riskLevel=...&search=...)
 router.get('/', getAllPHCs);
 
+// Create a new PHC facility
+router.post('/', createPHC);
+
 // Get single PHC by ID
 router.get('/:id', getPHCById);
+
+// Update single PHC by ID
+router.put('/:id', updatePHC);
+
+// Delete single PHC by ID
+router.delete('/:id', deletePHC);
 
 module.exports = router;

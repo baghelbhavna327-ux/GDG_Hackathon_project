@@ -226,11 +226,111 @@ const getCriticalPHCs = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Create a new PHC facility
+ * @route   POST /api/phcs
+ * @access  Private / Admin
+ */
+const createPHC = async (req, res, next) => {
+  try {
+    const { name, state, district, location, totalBeds, availableBeds, staffCount, activeStaff, riskLevel } = req.body;
+    
+    if (!name || !state || !district) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, state, and district are required fields'
+      });
+    }
+
+    const latitude = location?.latitude ?? (22.5 + (Math.random() - 0.5) * 6);
+    const longitude = location?.longitude ?? (78.5 + (Math.random() - 0.5) * 8);
+
+    const newPhc = await PHC.create({
+      name,
+      state,
+      district,
+      location: { latitude, longitude },
+      totalBeds: totalBeds ?? 30,
+      availableBeds: availableBeds ?? (totalBeds ? Math.round(totalBeds * 0.6) : 18),
+      staffCount: staffCount ?? 15,
+      activeStaff: activeStaff ?? 14,
+      riskLevel: riskLevel ?? 'NORMAL'
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: formatPHC(newPhc),
+      message: 'PHC facility created successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update an existing PHC facility
+ * @route   PUT /api/phcs/:id
+ * @access  Private / Admin
+ */
+const updatePHC = async (req, res, next) => {
+  try {
+    const phc = await PHC.findById(req.params.id);
+    if (!phc) {
+      return res.status(404).json({
+        success: false,
+        message: `PHC with ID ${req.params.id} not found`
+      });
+    }
+
+    const updatedPhc = await PHC.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: formatPHC(updatedPhc),
+      message: 'PHC facility updated successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Delete a PHC facility
+ * @route   DELETE /api/phcs/:id
+ * @access  Private / Admin
+ */
+const deletePHC = async (req, res, next) => {
+  try {
+    const phc = await PHC.findById(req.params.id);
+    if (!phc) {
+      return res.status(404).json({
+        success: false,
+        message: `PHC with ID ${req.params.id} not found`
+      });
+    }
+
+    await PHC.findByIdAndDelete(req.params.id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'PHC facility deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getPHCStats,
   getAllPHCs,
   getCriticalPHCs,
   getPHCsByState,
   getPHCsByDistrict,
-  getPHCById
+  getPHCById,
+  createPHC,
+  updatePHC,
+  deletePHC
 };
