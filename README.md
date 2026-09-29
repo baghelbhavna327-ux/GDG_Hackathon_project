@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # HealthChain AI — Predict. Prevent. Protect.
 
 A federated AI platform for public healthcare resource management and national medicine supply-chain optimization across Primary Health Centres (PHCs).
@@ -160,3 +161,6 @@ node qa_integration_suite.cjs
 - **Synthetic Datasets:** All datasets for Madhya Pradesh, Rajasthan, Gujarat, and Uttar Pradesh are generated synthetically for hackathon demonstration. No real Patient Identifiable Information (PII) is included.
 - **Privacy Boundaries:** Federated learning transmits model weight and gradient vectors during training, avoiding centralized pooling of raw hospital logs. Additional cryptographic privacy techniques (such as Differential Privacy and Secure Multi-Party Computation) would be required for national production deployment.
 - **Secrets & Configuration:** No passwords or secrets are committed. All configurations are loaded through `.env` files matching `.env.example`.
+=======
+# GDG_Hackathon_project
+>>>>>>> b6240277fec9d4a57887c868c8c37d7bf3e1538a
