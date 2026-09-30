@@ -1,24 +1,32 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthContextType, LoginCredentials, RegisterCredentials, User } from '../types/auth';
+import {
+  AuthContextType,
+  LoginCredentials,
+  RegisterCredentials,
+  User,
+} from '../types/auth';
 import { authService } from '../services/authService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize session on mount by checking backend
+  // Initialize and verify the existing session when the app starts.
   useEffect(() => {
     let isMounted = true;
 
     const verifySession = async () => {
       const storedToken = authService.getToken();
       const storedUser = authService.getStoredUser();
-      
-      // If no token in storage, user is unauthenticated
+
+      // No stored session -> remain logged out.
       if (!storedToken || !storedUser) {
         if (isMounted) {
           authService.removeToken();
@@ -31,24 +39,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       try {
-        // Verify token with backend
+        // Verify the stored token with the production backend.
         const currentUser = await authService.getMe();
+
         if (isMounted) {
           setUser(currentUser);
           setToken(storedToken);
+          setError(null);
         }
-      } catch (err: any) {
+      } catch (err) {
+        // The stored token is invalid/expired/rejected by the backend.
+        // Clear the stale session instead of treating the user as authenticated.
         if (isMounted) {
-          // If stored user exists, retain authenticated state
-          if (storedUser) {
-            setUser(storedUser);
-            setToken(storedToken);
-          } else {
-            authService.removeToken();
-            authService.removeStoredUser();
-            setUser(null);
-            setToken(null);
-          }
+          authService.removeToken();
+          authService.removeStoredUser();
+          setUser(null);
+          setToken(null);
         }
       } finally {
         if (isMounted) {
@@ -64,46 +70,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
+  // Login
+  const login = async (
+    credentials: LoginCredentials
+  ): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
+
     try {
       const response = await authService.login(credentials);
+
       if (response.data?.user) {
         setUser(response.data.user);
         setToken(response.token || authService.getToken());
+        setError(null);
         return true;
       }
+
+      setError('Login failed. No user data was returned.');
       return false;
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check credentials.');
+      setError(err?.message || 'Login failed. Please check your credentials.');
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (credentials: RegisterCredentials): Promise<boolean> => {
+  // Register
+  const register = async (
+    credentials: RegisterCredentials
+  ): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
+
     try {
       const response = await authService.register(credentials);
+
       if (response.data?.user) {
         setUser(response.data.user);
         setToken(response.token || authService.getToken());
+        setError(null);
         return true;
       }
+
+      setError('Registration failed. No user data was returned.');
       return false;
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please check your inputs.');
+      setError(
+        err?.message || 'Registration failed. Please check your inputs.'
+      );
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Logout
   const logout = async (): Promise<void> => {
     setIsLoading(true);
+
     try {
       await authService.logout();
     } catch (err) {
@@ -111,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       authService.removeToken();
       authService.removeStoredUser();
+
       setUser(null);
       setToken(null);
       setError(null);
@@ -118,22 +145,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateProfile = async (profileData: Partial<User>): Promise<boolean> => {
+  // Update profile
+  const updateProfile = async (
+    profileData: Partial<User>
+  ): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
+
     try {
       const updatedUser = await authService.updateProfile(profileData);
+
       setUser(updatedUser);
+      setError(null);
       return true;
     } catch (err: any) {
-      setError(err.message || 'Failed to update profile');
+      setError(err?.message || 'Failed to update profile.');
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const clearError = () => setError(null);
+  const clearError = () => {
+    setError(null);
+  };
 
   const value: AuthContextType = {
     user,
@@ -145,16 +180,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     register,
     logout,
     updateProfile,
-    clearError
+    clearError,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+
   return context;
 };
