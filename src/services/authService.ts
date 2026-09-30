@@ -1,12 +1,28 @@
-import { AuthResponse, LoginCredentials, RegisterCredentials, User } from '../types/auth';
 
-const API_BASE_URL = ((import.meta as any).env?.VITE_API_URL as string) || 'http://localhost:5000/api';
+import {
+  AuthResponse,
+  LoginCredentials,
+  RegisterCredentials,
+  User,
+} from '../types/auth';
+
+const API_BASE_URL =
+  ((import.meta as any).env?.VITE_API_URL as string) ||
+  'http://localhost:5000/api';
 
 const TOKEN_KEY = 'healthchain_auth_token';
 const USER_KEY = 'healthchain_auth_user';
 
+const isDevelopment =
+  Boolean((import.meta as any).env?.DEV) ||
+  (typeof window !== 'undefined' &&
+    window.location.hostname === 'localhost');
+
 export const authService = {
-  // Token management helpers
+  // ------------------------------------------------------------
+  // TOKEN MANAGEMENT
+  // ------------------------------------------------------------
+
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   },
@@ -19,12 +35,21 @@ export const authService = {
     localStorage.removeItem(TOKEN_KEY);
   },
 
+  // ------------------------------------------------------------
+  // USER MANAGEMENT
+  // ------------------------------------------------------------
+
   getStoredUser(): User | null {
     const raw = localStorage.getItem(USER_KEY);
-    if (!raw) return null;
+
+    if (!raw) {
+      return null;
+    }
+
     try {
-      return JSON.parse(raw);
+      return JSON.parse(raw) as User;
     } catch {
+      localStorage.removeItem(USER_KEY);
       return null;
     }
   },
@@ -37,55 +62,87 @@ export const authService = {
     localStorage.removeItem(USER_KEY);
   },
 
-  // Helper for auth headers
+  // ------------------------------------------------------------
+  // AUTH HEADERS
+  // ------------------------------------------------------------
+
   getAuthHeaders(): HeadersInit {
     const token = this.getToken();
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      Accept: 'application/json'
+      Accept: 'application/json',
     };
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
+
     return headers;
   },
 
-  /**
-   * Register a new user
-   */
-  async register(data: RegisterCredentials): Promise<AuthResponse> {
+  // ------------------------------------------------------------
+  // REGISTER
+  // ------------------------------------------------------------
+
+  async register(
+    data: RegisterCredentials
+  ): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/auth/register`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(data),
+        }
+      );
 
       const result: AuthResponse = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || result.message || 'Registration failed. Please verify your details.');
+        throw new Error(
+          result.error ||
+            result.message ||
+            'Registration failed. Please verify your details.'
+        );
       }
 
       if (result.token) {
         this.setToken(result.token);
       }
+
       if (result.data?.user) {
         this.setStoredUser(result.data.user);
       }
 
       return result;
     } catch (err: any) {
-      throw new Error(err.message || 'Network error occurred during registration.');
+      throw new Error(
+        err?.message ||
+          'Network error occurred during registration.'
+      );
     }
   },
 
-  /**
-   * Helper for recognized demo user accounts
-   */
-  getDemoUser(email: string, password?: string): User | null {
-    const normalizedEmail = email.toLowerCase().trim();
+  // ------------------------------------------------------------
+  // LOCAL DEMO USERS
+  //
+  // These are used ONLY during local development.
+  // They are NOT used by the production deployment.
+  // ------------------------------------------------------------
+
+  getDemoUser(
+    email: string,
+    password?: string
+  ): User | null {
+    const normalizedEmail = email
+      .toLowerCase()
+      .trim();
 
     // Demo Admin
     if (
@@ -93,17 +150,23 @@ export const authService = {
       normalizedEmail === 'admin@healthchain.ai' ||
       normalizedEmail === 'admin@healthchain.com'
     ) {
-      if (!password || password === 'Admin@123456' || password.toLowerCase() === 'admin' || password.toLowerCase() === 'demo') {
+      if (
+        !password ||
+        password === 'Admin@123456' ||
+        password.toLowerCase() === 'admin' ||
+        password.toLowerCase() === 'demo'
+      ) {
         return {
           id: 'usr-admin-01',
           name: 'Dr. Rachel Vance',
           email: 'admin@healthchain.gov.in',
           role: 'admin',
-          department: 'Regional Healthcare Crisis Directorate',
+          department:
+            'Regional Healthcare Crisis Directorate',
           facility: 'National Command Center',
           phoneNumber: '+91 98111 22334',
           dutyStatus: 'on_duty',
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         };
       }
     }
@@ -115,17 +178,24 @@ export const authService = {
       normalizedEmail === 'doctor@healthchain.gov.in' ||
       normalizedEmail === 'worker@healthchain.ai'
     ) {
-      if (!password || password === 'Worker@123456' || password === 'Clinician@123456' || password.toLowerCase() === 'worker' || password.toLowerCase() === 'demo') {
+      if (
+        !password ||
+        password === 'Worker@123456' ||
+        password === 'Clinician@123456' ||
+        password.toLowerCase() === 'worker' ||
+        password.toLowerCase() === 'demo'
+      ) {
         return {
           id: 'usr-worker-02',
           name: 'Dr. Priya Sharma',
           email: 'worker@healthchain.gov.in',
           role: 'health_worker',
-          department: 'Primary Healthcare Operations',
+          department:
+            'Primary Healthcare Operations',
           facility: 'PHC Sehore North',
           phoneNumber: '+91 98222 33445',
           dutyStatus: 'on_duty',
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         };
       }
     }
@@ -137,17 +207,23 @@ export const authService = {
       normalizedEmail === 'demo@healthchain.com' ||
       normalizedEmail === 'public@healthchain.gov.in'
     ) {
-      if (!password || password === 'Viewer@123456' || password.toLowerCase() === 'viewer' || password.toLowerCase() === 'demo') {
+      if (
+        !password ||
+        password === 'Viewer@123456' ||
+        password.toLowerCase() === 'viewer' ||
+        password.toLowerCase() === 'demo'
+      ) {
         return {
           id: 'usr-viewer-03',
           name: 'Rajesh Gupta',
           email: 'viewer@healthchain.gov.in',
           role: 'viewer',
-          department: 'Public Health Telemetry & Oversight',
+          department:
+            'Public Health Telemetry & Oversight',
           facility: 'State Health Mission Registry',
           phoneNumber: '+91 98333 44556',
           dutyStatus: 'on_duty',
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         };
       }
     }
@@ -155,135 +231,283 @@ export const authService = {
     return null;
   },
 
-  /**
-   * Login existing user
-   */
-  async login(data: LoginCredentials): Promise<AuthResponse> {
-    const { email, password } = data;
+  // ------------------------------------------------------------
+  // LOGIN
+  // ------------------------------------------------------------
 
-    // 1. First attempt to authenticate via live backend API
+  async login(
+    data: LoginCredentials
+  ): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/auth/login`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(data),
+        }
+      );
 
-      if (response.ok) {
-        const result: AuthResponse = await response.json();
-        if (result.success && result.data?.user) {
-          if (result.token) {
-            this.setToken(result.token);
-          }
-          this.setStoredUser(result.data.user);
-          return result;
+      let result: AuthResponse | null = null;
+
+      try {
+        result = (await response.json()) as AuthResponse;
+      } catch {
+        result = null;
+      }
+
+      // Real backend authentication succeeded.
+      if (
+        response.ok &&
+        result?.success &&
+        result?.data?.user
+      ) {
+        // Remove any stale fake/old token before saving the
+        // current production token.
+        this.removeToken();
+        this.removeStoredUser();
+
+        if (result.token) {
+          this.setToken(result.token);
+        }
+
+        this.setStoredUser(result.data.user);
+
+        return result;
+      }
+
+      // If the backend responded with a real error,
+      // do NOT silently turn it into a fake production session.
+      const backendMessage =
+        result?.error ||
+        result?.message ||
+        `Login failed with status ${response.status}.`;
+
+      // Local-only demo fallback.
+      if (isDevelopment) {
+        const demoUser = this.getDemoUser(
+          data.email,
+          data.password
+        );
+
+        if (demoUser) {
+          const demoToken =
+            `demo_jwt_${demoUser.role}_${Date.now()}`;
+
+          this.setToken(demoToken);
+          this.setStoredUser(demoUser);
+
+          return {
+            success: true,
+            message:
+              'Local development demo session established.',
+            token: demoToken,
+            data: {
+              user: demoUser,
+            },
+          };
         }
       }
-    } catch (networkError) {
-      // Backend unavailable; proceed to safe demo credentials validation
-    }
 
-    // 2. Fallback: Authenticate recognized demo role credentials
-    const demoUser = this.getDemoUser(email, password);
-    if (demoUser) {
-      const demoToken = `demo_jwt_${demoUser.role}_${Date.now()}`;
-      this.setToken(demoToken);
-      this.setStoredUser(demoUser);
+      throw new Error(backendMessage);
+    } catch (err: any) {
+      // Local-only fallback when backend is unavailable.
+      if (isDevelopment) {
+        const demoUser = this.getDemoUser(
+          data.email,
+          data.password
+        );
 
-      return {
-        success: true,
-        message: 'Demo session established successfully.',
-        token: demoToken,
-        data: {
-          user: demoUser
+        if (demoUser) {
+          const demoToken =
+            `demo_jwt_${demoUser.role}_${Date.now()}`;
+
+          this.setToken(demoToken);
+          this.setStoredUser(demoUser);
+
+          return {
+            success: true,
+            message:
+              'Local development demo session established.',
+            token: demoToken,
+            data: {
+              user: demoUser,
+            },
+          };
         }
-      };
-    }
+      }
 
-    throw new Error('Invalid email or password. Please use demo credentials or verify your account.');
+      // Production must never manufacture a fake JWT.
+      this.removeToken();
+      this.removeStoredUser();
+
+      throw new Error(
+        err?.message ||
+          'Unable to sign in. Please verify your credentials.'
+      );
+    }
   },
 
-  /**
-   * Fetch current authenticated user
-   */
+  // ------------------------------------------------------------
+  // CURRENT USER / SESSION VALIDATION
+  // ------------------------------------------------------------
+
   async getMe(): Promise<User> {
-    // 1. Check if we have a stored user first
-    const storedUser = this.getStoredUser();
+    const token = this.getToken();
+
+    if (!token) {
+      this.removeStoredUser();
+      throw new Error(
+        'No authentication token found. Please log in.'
+      );
+    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        method: 'GET',
-        headers: this.getAuthHeaders(),
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data?.user) {
-          const user = result.data.user;
-          this.setStoredUser(user);
-          return user;
+      const response = await fetch(
+        `${API_BASE_URL}/auth/me`,
+        {
+          method: 'GET',
+          headers: this.getAuthHeaders(),
+          credentials: 'include',
         }
-      }
-    } catch (networkError) {
-      // If backend is offline but user is in stored session, retain session
-      if (storedUser) {
-        return storedUser;
-      }
-    }
+      );
 
-    // If stored user exists (e.g. demo session), retain it
-    if (storedUser) {
-      return storedUser;
-    }
+      let result: any = null;
 
-    this.removeToken();
-    this.removeStoredUser();
-    throw new Error('Session expired. Please log in.');
+      try {
+        result = await response.json();
+      } catch {
+        result = null;
+      }
+
+      // Backend confirmed the token.
+      if (
+        response.ok &&
+        result?.success &&
+        result?.data?.user
+      ) {
+        const user = result.data.user;
+
+        this.setStoredUser(user);
+
+        return user;
+      }
+
+      // 401/403 means the stored token is not valid anymore.
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+        this.removeToken();
+        this.removeStoredUser();
+
+        throw new Error(
+          'Your session has expired. Please log in again.'
+        );
+      }
+
+      throw new Error(
+        result?.error ||
+          result?.message ||
+          `Unable to verify session (${response.status}).`
+      );
+    } catch (err: any) {
+      // Never keep a rejected production token alive.
+      this.removeToken();
+      this.removeStoredUser();
+
+      throw new Error(
+        err?.message ||
+          'Unable to verify your session. Please log in again.'
+      );
+    }
   },
 
-  /**
-   * Update profile information
-   */
-  async updateProfile(profileData: Partial<User>): Promise<User> {
+  // ------------------------------------------------------------
+  // UPDATE PROFILE
+  // ------------------------------------------------------------
+
+  async updateProfile(
+    profileData: Partial<User>
+  ): Promise<User> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
-        method: 'PATCH',
-        headers: this.getAuthHeaders(),
-        credentials: 'include',
-        body: JSON.stringify(profileData)
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/auth/profile`,
+        {
+          method: 'PATCH',
+          headers: this.getAuthHeaders(),
+          credentials: 'include',
+          body: JSON.stringify(profileData),
+        }
+      );
 
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to update profile.');
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+          this.removeToken();
+          this.removeStoredUser();
+        }
+
+        throw new Error(
+          result.error ||
+            result.message ||
+            'Failed to update profile.'
+        );
       }
 
-      const updatedUser = result.data.user;
+      const updatedUser = result.data?.user;
+
+      if (!updatedUser) {
+        throw new Error(
+          'Profile update succeeded but no user data was returned.'
+        );
+      }
+
       this.setStoredUser(updatedUser);
+
       return updatedUser;
     } catch (err: any) {
-      throw new Error(err.message || 'Network error updating profile.');
+      throw new Error(
+        err?.message ||
+          'Network error updating profile.'
+      );
     }
   },
 
-  /**
-   * Logout user
-   */
+  // ------------------------------------------------------------
+  // LOGOUT
+  // ------------------------------------------------------------
+
   async logout(): Promise<void> {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        credentials: 'include'
-      });
+      const token = this.getToken();
+
+      if (token) {
+        await fetch(
+          `${API_BASE_URL}/auth/logout`,
+          {
+            method: 'POST',
+            headers: this.getAuthHeaders(),
+            credentials: 'include',
+          }
+        );
+      }
     } catch (err) {
-      console.warn('Logout API call notification error:', err);
+      console.warn(
+        'Logout network notice:',
+        err
+      );
     } finally {
       this.removeToken();
       this.removeStoredUser();
     }
-  }
+  },
 };
