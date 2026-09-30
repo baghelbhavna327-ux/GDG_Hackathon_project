@@ -1,7 +1,7 @@
 import { SupplyRequest, CreateSupplyRequestPayload } from '../types';
 import { triggerNotificationRefresh } from './notificationService';
 
-const API_BASE_URL = 'http://localhost:5000/api/supply-requests';
+const API_BASE_URL = `${((import.meta as any).env?.VITE_API_URL as string) || 'http://localhost:5000/api'}/supply-requests`;
 
 // Initial fallback mock data for offline resilience and demonstration
 let localSupplyRequests: SupplyRequest[] = [
@@ -355,4 +355,5 @@ export async function fulfillSupplyRequest(id: string): Promise<SupplyRequest> {
   triggerNotificationRefresh();
   return updated;
 }
+
 

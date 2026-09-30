@@ -1,6 +1,6 @@
 import { AppNotification } from '../types';
 
-const API_BASE_URL = 'http://localhost:5000/api/notifications';
+const API_BASE_URL = `${((import.meta as any).env?.VITE_API_URL as string) || 'http://localhost:5000/api'}/notifications`;
 
 // Helper to get auth headers
 const getAuthHeaders = (): HeadersInit => {
@@ -117,3 +117,4 @@ export const triggerNotificationRefresh = () => {
     window.dispatchEvent(new CustomEvent('healthchain:notification-refresh'));
   }
 };
+

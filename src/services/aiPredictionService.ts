@@ -230,7 +230,7 @@ export async function fetchFederatedMetadata(): Promise<FederatedMetadataRespons
     }
     // Attempt fallback via Node Express backend if direct FastAPI fetch failed
     try {
-      const fallbackUrl = 'http://localhost:5000/api/federated/metadata';
+      const fallbackUrl = `${((import.meta as any).env?.VITE_API_URL as string) || 'http://localhost:5000/api'}/federated/metadata`;
       const fallbackRes = await fetch(fallbackUrl, {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
@@ -286,7 +286,7 @@ export async function fetchFederatedPrediction(
     }
     // Attempt fallback via Node Express backend
     try {
-      const fallbackUrl = 'http://localhost:5000/api/federated/predict';
+      const fallbackUrl = `${((import.meta as any).env?.VITE_API_URL as string) || 'http://localhost:5000/api'}/federated/predict`;
       const fallbackRes = await fetch(fallbackUrl, {
         method: 'POST',
         headers: {
@@ -351,7 +351,7 @@ export async function fetchDiseaseEvents(
   } catch (err) {
     // Fallback to Express backend
     try {
-      const fallbackRes = await fetch(`http://localhost:5000/api/disease-events${queryStr}`, {
+      const fallbackRes = await fetch(`${((import.meta as any).env?.VITE_API_URL as string) || 'http://localhost:5000/api'}/disease-events${queryStr}`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
@@ -390,7 +390,7 @@ export async function fetchDiseaseAdjustedDemand(
   } catch (err) {
     // Fallback to Express backend
     try {
-      const fallbackRes = await fetch('http://localhost:5000/api/disease-events/predict', {
+      const fallbackRes = await fetch(`${((import.meta as any).env?.VITE_API_URL as string) || 'http://localhost:5000/api'}/disease-events/predict`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -495,4 +495,5 @@ export async function fetchRegionalDemandAnalysis(
   } catch {}
   return { success: false, data: [] };
 }
+
 
