@@ -32,7 +32,13 @@ const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 dotenv.config();
 
 // 2. Initialize Express application
+// 2. Initialize Express application
 const app = express();
+
+// Render runs this service behind a reverse proxy.
+// Trust the first proxy hop so Express can determine the client IP
+// correctly for middleware such as express-rate-limit.
+app.set('trust proxy', 1);
 
 // 3. Connect to MongoDB
 connectDB();
